@@ -1,9 +1,9 @@
 import { useSignUp } from '@clerk/clerk-expo';
-import { useRouter, Link } from 'expo-router';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { handleSignUpPress, handleVerifyPress } from '../utils/auth_utils';
-import { styles } from './styles/signUpStyles';
+import SignUpManager from './coreComponents/signUpManager';
+import VerificationManager from './coreComponents/verificationManager';
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -35,88 +35,28 @@ export default function SignUpScreen() {
       onSuccess: () => router.replace('/(main)/home'),
     });
   };
-
+//Conditional rendering to check if the user is pending verification(otp screen)
   if (pendingVerification) {
     return (
-      <View style={styles.verifyContainer}>
-        <TouchableOpacity
-          onPress={() => setPendingVerification(false)}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.verifyTitle}>Verify Email</Text>
-        <Text style={styles.verifySubtitle}>
-          We sent a verification code to {emailAddress}
-        </Text>
-
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
-
-        <TextInput
-          value={code}
-          onChangeText={setCode}
-          placeholder="Enter verification code"
-          keyboardType="number-pad"
-          style={styles.verifyInput}
-        />
-
-        <TouchableOpacity
-          onPress={onVerifyPress}
-          style={styles.primaryButton}
-        >
-          <Text style={styles.primaryButtonText}>Verify</Text>
-        </TouchableOpacity>
-      </View>
+      <VerificationManager
+        emailAddress={emailAddress}
+        code={code}
+        setCode={setCode}
+        error={error}
+        onBack={() => setPendingVerification(false)}
+        onVerifyPress={onVerifyPress}
+      />
     );
   }
-
+//The sign up screen
   return (
-    <View style={styles.container}>
-      <Link href="/(auth)/welcome" asChild>
-        <TouchableOpacity style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-      </Link>
-
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Start organizing your life today</Text>
-
-      {error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : null}
-
-      <TextInput
-        value={emailAddress}
-        onChangeText={setEmailAddress}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={styles.input}
-      />
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-        style={styles.inputPassword}
-      />
-
-      <TouchableOpacity
-        onPress={onSignUpPress}
-        style={styles.primaryButton}
-      >
-        <Text style={styles.primaryButtonText}>Create Account</Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Already have an account? </Text>
-        <Link href="/(auth)/sign-in">
-          <Text style={styles.footerLink}>Sign in</Text>
-        </Link>
-      </View>
-    </View>
+    <SignUpManager
+      emailAddress={emailAddress}
+      setEmailAddress={setEmailAddress}
+      password={password}
+      setPassword={setPassword}
+      error={error}
+      onSignUpPress={onSignUpPress}
+    />
   );
 }
