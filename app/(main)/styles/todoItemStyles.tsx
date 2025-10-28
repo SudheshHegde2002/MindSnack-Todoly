@@ -60,5 +60,16 @@ export const styles = StyleSheet.create({
     marginTop: 2,
     padding: 4,
   },
+  syncBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 4,
+  },
+  syncText: {
+    fontSize: 11,
+    color: '#EF4444',
+    fontStyle: 'italic',
+  },
 });
 

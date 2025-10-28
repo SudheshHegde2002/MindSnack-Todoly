@@ -7,29 +7,32 @@ import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import AddTodoModal from './components/AddTodoModal';
 import SettingsModal from './components/SettingsModal';
-import TodoItem, { Todo } from './components/TodoItem';
+import TodoItem from './components/TodoItem';
+import { useTodos } from '../../hooks/useTodos';
 
 export default function CompletedScreen() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const { todos, isLoading, isOnline, addTodo, toggleComplete, deleteTodo } = useTodos();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          onPress={() => setSettingsVisible(true)}
-          style={{ marginRight: 16 }}
-        >
-          <MaterialIcons name="settings" size={24} color="#6366F1" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+          {!isOnline && (
+            <MaterialIcons name="cloud-off" size={20} color="#EF4444" style={{ marginRight: 12 }} />
+          )}
+          <TouchableOpacity onPress={() => setSettingsVisible(true)}>
+            <MaterialIcons name="settings" size={24} color="#6366F1" />
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, isOnline]);
 
-  if (!isLoaded) {
+  if (!isLoaded || isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
@@ -41,31 +44,7 @@ export default function CompletedScreen() {
     return <Redirect href="/(auth)/welcome" />;
   }
 
-  const handleAddTodo = (title: string, description: string, group: string) => {
-    const newTodo: Todo = {
-      id: Date.now().toString(),
-      title,
-      description,
-      group,
-      completed: false,
-      createdAt: new Date(),
-    };
-    setTodos((prev) => [newTodo, ...prev]);
-  };
-
-  const handleToggleComplete = (id: string) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
-  };
-
-  const handleDeleteTodo = (id: string) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
-  };
-
-  const completedTodos = todos.filter((todo) => todo.completed);
+  const completedTodos = todos.filter((todo) => todo.is_completed === 1);
 
   return (
     <View style={styles.container}>
@@ -81,8 +60,8 @@ export default function CompletedScreen() {
           renderItem={({ item }) => (
             <TodoItem
               todo={item}
-              onToggleComplete={handleToggleComplete}
-              onDelete={handleDeleteTodo}
+              onToggleComplete={toggleComplete}
+              onDelete={deleteTodo}
             />
           )}
           contentContainerStyle={styles.listContainer}
@@ -97,7 +76,7 @@ export default function CompletedScreen() {
       <AddTodoModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onAdd={handleAddTodo}
+        onAdd={addTodo}
       />
 
       <SettingsModal
@@ -107,4 +86,3 @@ export default function CompletedScreen() {
     </View>
   );
 }
-

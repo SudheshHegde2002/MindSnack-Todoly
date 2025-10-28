@@ -15,22 +15,18 @@ import { styles } from '../styles/addTodoModalStyles';
 type AddTodoModalProps = {
   visible: boolean;
   onClose: () => void;
-  onAdd: (title: string, description: string, group: string) => void;
+  onAdd: (title: string, description: string) => void;
 };
-
-const TASK_GROUPS = ['Personal', 'Work', 'Shopping', 'Health', 'Other'];
 
 export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('Personal');
 
   const handleAdd = () => {
     if (title.trim()) {
-      onAdd(title.trim(), description.trim(), selectedGroup);
+      onAdd(title.trim(), description.trim());
       setTitle('');
       setDescription('');
-      setSelectedGroup('Personal');
       onClose();
     }
   };
@@ -38,7 +34,6 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
   const handleCancel = () => {
     setTitle('');
     setDescription('');
-    setSelectedGroup('Personal');
     onClose();
   };
 
@@ -82,29 +77,6 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
               numberOfLines={4}
               textAlignVertical="top"
             />
-
-            <Text style={styles.label}>Task Group</Text>
-            <View style={styles.groupContainer}>
-              {TASK_GROUPS.map((group) => (
-                <TouchableOpacity
-                  key={group}
-                  style={[
-                    styles.groupChip,
-                    selectedGroup === group && styles.groupChipSelected,
-                  ]}
-                  onPress={() => setSelectedGroup(group)}
-                >
-                  <Text
-                    style={[
-                      styles.groupChipText,
-                      selectedGroup === group && styles.groupChipTextSelected,
-                    ]}
-                  >
-                    {group}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </ScrollView>
 
           <View style={styles.modalFooter}>

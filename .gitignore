@@ -146,3 +146,5 @@ expo-env.d.ts
 
 # Manualy added files:
 GOOGLE_OAUTH_SETUP.md
+IMPLEMENTATION_SUMMARY.md
+DATABASE_SETUP.md

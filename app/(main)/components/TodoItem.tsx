@@ -1,41 +1,52 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from '../styles/todoItemStyles';
-
-export type Todo = {
-  id: string;
-  title: string;
-  description: string;
-  group: string;
-  completed: boolean;
-  createdAt: Date;
-};
+import { LocalTodo } from '../../../services/database';
 
 type TodoItemProps = {
-  todo: Todo;
+  todo: LocalTodo;
   onToggleComplete: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
-const GROUP_COLORS: { [key: string]: string } = {
-  Personal: '#EC4899',
-  Work: '#3B82F6',
-  Shopping: '#10B981',
-  Health: '#F59E0B',
-  Other: '#6B7280',
-};
-
 export default function TodoItem({ todo, onToggleComplete, onDelete }: TodoItemProps) {
-  const groupColor = GROUP_COLORS[todo.group] || GROUP_COLORS.Other;
+  const isCompleted = todo.is_completed === 1;
+
+  const handleLongPress = () => {
+    if (isCompleted) {
+      Alert.alert(
+        'Todo Actions',
+        'What would you like to do?',
+        [
+          { text: 'Mark as Active', onPress: () => onToggleComplete(todo.id) },
+          { text: 'Delete', onPress: () => onDelete(todo.id), style: 'destructive' },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Delete Todo',
+        'Are you sure you want to delete this todo?',
+        [
+          { text: 'Delete', onPress: () => onDelete(todo.id), style: 'destructive' },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    }
+  };
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity 
+      style={styles.container}
+      onLongPress={handleLongPress}
+      activeOpacity={0.7}
+    >
       <TouchableOpacity
         style={styles.checkboxContainer}
         onPress={() => onToggleComplete(todo.id)}
       >
-        {todo.completed ? (
+        {isCompleted ? (
           <MaterialIcons name="check-circle" size={24} color="#6366F1" />
         ) : (
           <MaterialIcons name="radio-button-unchecked" size={24} color="#D1D5DB" />
@@ -43,25 +54,21 @@ export default function TodoItem({ todo, onToggleComplete, onDelete }: TodoItemP
       </TouchableOpacity>
 
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={[styles.title, todo.completed && styles.titleCompleted]}>
-            {todo.title}
-          </Text>
-          <View style={[styles.groupBadge, { backgroundColor: `${groupColor}20` }]}>
-            <Text style={[styles.groupText, { color: groupColor }]}>{todo.group}</Text>
-          </View>
-        </View>
+        <Text style={[styles.title, isCompleted && styles.titleCompleted]}>
+          {todo.title}
+        </Text>
         {todo.description ? (
-          <Text style={[styles.description, todo.completed && styles.descriptionCompleted]}>
+          <Text style={styles.description} numberOfLines={2}>
             {todo.description}
           </Text>
         ) : null}
+        {!todo.synced && (
+          <View style={styles.syncBadge}>
+            <MaterialIcons name="sync" size={12} color="#EF4444" />
+            <Text style={styles.syncText}>Pending sync</Text>
+          </View>
+        )}
       </View>
-
-      <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(todo.id)}>
-        <MaterialIcons name="delete-outline" size={20} color="#EF4444" />
-      </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 }
-

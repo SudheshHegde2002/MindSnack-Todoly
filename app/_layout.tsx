@@ -1,6 +1,8 @@
 import { ClerkProvider } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 import { Slot } from 'expo-router';
+import { useEffect } from 'react';
+import { initDatabase } from '../services/database';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -27,6 +29,10 @@ if (!publishableKey) {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    initDatabase();
+  }, []);
+
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <Slot />
