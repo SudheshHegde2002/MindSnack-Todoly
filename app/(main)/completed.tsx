@@ -2,15 +2,32 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Redirect } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import AddTodoModal from './components/AddTodoModal';
+import SettingsModal from './components/SettingsModal';
 import TodoItem, { Todo } from './components/TodoItem';
 
 export default function CompletedScreen() {
   const { isSignedIn, isLoaded } = useAuth();
+  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [todos, setTodos] = useState<Todo[]>([]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => setSettingsVisible(true)}
+          style={{ marginRight: 16 }}
+        >
+          <MaterialIcons name="settings" size={24} color="#6366F1" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   if (!isLoaded) {
     return (
@@ -81,6 +98,11 @@ export default function CompletedScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onAdd={handleAddTodo}
+      />
+
+      <SettingsModal
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
       />
     </View>
   );

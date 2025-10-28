@@ -66,6 +66,12 @@ export default function MainLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="components/SettingsModal"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
