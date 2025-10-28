@@ -54,6 +54,18 @@ export default function MainLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="components/AddTodoModal"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="components/TodoItem"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
