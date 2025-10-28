@@ -1,7 +1,8 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { Link, useRouter } from 'expo-router';
-import { Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React from 'react';
+import { handleSignInPress } from '../utils/auth_utils';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -10,35 +11,16 @@ export default function SignInScreen() {
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
 
-  const onSignInPress = async () => {
-    if (!isLoaded) return;
-
-    if (!emailAddress || !password) {
-      setError('Please enter both email and password');
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
-    }
-
-    try {
-      setError('');
-      const signInAttempt = await signIn.create({
-        identifier: emailAddress,
-        password,
-      });
-
-      if (signInAttempt.status === 'complete') {
-        await setActive({ session: signInAttempt.createdSessionId });
-        router.replace('/(main)/home');
-      } else {
-        console.error('Sign in incomplete:', JSON.stringify(signInAttempt, null, 2));
-        setError('Sign in incomplete. Please try again.');
-      }
-    } catch (err: any) {
-      console.error('Sign in error:', JSON.stringify(err, null, 2));
-      const errorMessage = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Sign in failed. Please try again.';
-      setError(errorMessage);
-      Alert.alert('Sign In Error', errorMessage);
-    }
+  const onSignInPress = () => {
+    handleSignInPress({
+      signIn,
+      setActive,
+      isLoaded,
+      emailAddress,
+      password,
+      setError,
+      onSuccess: () => router.replace('/(main)/home'),
+    });
   };
 
   return (

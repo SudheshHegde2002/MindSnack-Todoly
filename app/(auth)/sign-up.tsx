@@ -1,7 +1,8 @@
 import { useSignUp } from '@clerk/clerk-expo';
 import { useRouter, Link } from 'expo-router';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import React from 'react';
+import { handleSignUpPress, handleVerifyPress } from '../utils/auth_utils';
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -12,54 +13,26 @@ export default function SignUpScreen() {
   const [code, setCode] = React.useState('');
   const [error, setError] = React.useState('');
 
-  const onSignUpPress = async () => {
-    if (!isLoaded) return;
-
-    if (!emailAddress || !password) {
-      setError('Please enter both email and password');
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
-    }
-
-    try {
-      setError('');
-      await signUp.create({ 
-        emailAddress, 
-        password 
-      });
-      
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-      setPendingVerification(true);
-    } catch (err: any) {
-      console.error('Sign up error:', JSON.stringify(err, null, 2));
-      const errorMessage = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Sign up failed. Please try again.';
-      setError(errorMessage);
-      Alert.alert('Sign Up Error', errorMessage);
-    }
+  const onSignUpPress = () => {
+    handleSignUpPress({
+      signUp,
+      isLoaded,
+      emailAddress,
+      password,
+      setError,
+      setPendingVerification,
+    });
   };
 
-  const onVerifyPress = async () => {
-    if (!isLoaded) return;
-
-    try {
-      setError('');
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-
-      if (completeSignUp.status === 'complete') {
-        await setActive({ session: completeSignUp.createdSessionId });
-        router.replace('/(main)/home');
-      } else {
-        console.error(JSON.stringify(completeSignUp, null, 2));
-        setError('Verification incomplete. Please try again.');
-      }
-    } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      const errorMessage = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Verification failed';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-    }
+  const onVerifyPress = () => {
+    handleVerifyPress({
+      signUp,
+      setActive,
+      isLoaded,
+      code,
+      setError,
+      onSuccess: () => router.replace('/(main)/home'),
+    });
   };
 
   if (pendingVerification) {
