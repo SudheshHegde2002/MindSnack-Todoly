@@ -1,5 +1,5 @@
 import { Link, Redirect, useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth } from '@clerk/clerk-expo';
 import React from 'react';
@@ -11,23 +11,33 @@ export default function WelcomeScreen() {
   const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const [isAuthenticating, setIsAuthenticating] = React.useState(false);
 
   const onGoogleSignIn = React.useCallback(async () => {
     try {
+      setIsAuthenticating(true);
       const redirectUrl = makeRedirectUri({ scheme: 'todoly' });
       const { createdSessionId, setActive } = await startOAuthFlow({ redirectUrl });
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        router.replace('/(main)/home');
       }
     } catch (err) {
       console.error('OAuth error:', err);
+      setIsAuthenticating(false);
     }
-  }, []);
+  }, [router]);
 
   if (isLoaded && isSignedIn) {
     return <Redirect href="/(main)/home" />;
+  }
+
+  if (isAuthenticating) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAFA' }}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
   }
 
   return (
