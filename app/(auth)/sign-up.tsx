@@ -39,8 +39,8 @@ export default function SignUpScreen() {
   if (pendingVerification) {
     return (
       <View style={styles.verifyContainer}>
-        <TouchableOpacity 
-          onPress={() => setPendingVerification(false)} 
+        <TouchableOpacity
+          onPress={() => setPendingVerification(false)}
           style={styles.backButton}
         >
           <Text style={styles.backButtonText}>← Back</Text>
@@ -63,8 +63,8 @@ export default function SignUpScreen() {
           style={styles.verifyInput}
         />
 
-        <TouchableOpacity 
-          onPress={onVerifyPress} 
+        <TouchableOpacity
+          onPress={onVerifyPress}
           style={styles.primaryButton}
         >
           <Text style={styles.primaryButtonText}>Verify</Text>
@@ -104,8 +104,8 @@ export default function SignUpScreen() {
         style={styles.inputPassword}
       />
 
-      <TouchableOpacity 
-        onPress={onSignUpPress} 
+      <TouchableOpacity
+        onPress={onSignUpPress}
         style={styles.primaryButton}
       >
         <Text style={styles.primaryButtonText}>Create Account</Text>
