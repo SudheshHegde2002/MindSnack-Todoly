@@ -3,6 +3,7 @@ import { Link, useRouter } from 'expo-router';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React from 'react';
 import { handleSignInPress } from '../utils/auth_utils';
+import { styles } from './styles/signInStyles';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -24,18 +25,18 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#FAFAFA' }}>
+    <View style={styles.container}>
       <Link href="/(auth)/welcome" asChild>
-        <TouchableOpacity style={{ marginBottom: 24 }}>
-          <Text style={{ color: '#6366F1', fontSize: 14 }}>← Back</Text>
+        <TouchableOpacity style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
       </Link>
 
-      <Text style={{ fontSize: 28, fontWeight: '700', marginBottom: 8, color: '#1A1A1A' }}>Sign In</Text>
-      <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 32 }}>Welcome back to Todoly</Text>
+      <Text style={styles.title}>Sign In</Text>
+      <Text style={styles.subtitle}>Welcome back to Todoly</Text>
 
       {error ? (
-        <Text style={{ color: '#EF4444', marginBottom: 12, fontSize: 14 }}>{error}</Text>
+        <Text style={styles.errorText}>{error}</Text>
       ) : null}
 
       <TextInput
@@ -44,48 +45,27 @@ export default function SignInScreen() {
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
-        style={{ 
-          borderWidth: 1, 
-          borderColor: '#E5E7EB', 
-          padding: 14, 
-          marginBottom: 16, 
-          borderRadius: 8,
-          backgroundColor: '#FFFFFF',
-          fontSize: 16
-        }}
+        style={styles.input}
       />
       <TextInput
         value={password}
         onChangeText={setPassword}
         placeholder="Password"
         secureTextEntry
-        style={{ 
-          borderWidth: 1, 
-          borderColor: '#E5E7EB', 
-          padding: 14, 
-          marginBottom: 24, 
-          borderRadius: 8,
-          backgroundColor: '#FFFFFF',
-          fontSize: 16
-        }}
+        style={styles.inputPassword}
       />
 
       <TouchableOpacity 
         onPress={onSignInPress} 
-        style={{ 
-          backgroundColor: '#6366F1', 
-          padding: 16, 
-          borderRadius: 8,
-          alignItems: 'center'
-        }}
+        style={styles.primaryButton}
       >
-        <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Sign In</Text>
+        <Text style={styles.primaryButtonText}>Sign In</Text>
       </TouchableOpacity>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
-        <Text style={{ color: '#6B7280', fontSize: 14 }}>Don't have an account? </Text>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Don't have an account? </Text>
         <Link href="/(auth)/sign-up">
-          <Text style={{ color: '#6366F1', fontSize: 14, fontWeight: '600' }}>Sign up</Text>
+          <Text style={styles.footerLink}>Sign up</Text>
         </Link>
       </View>
     </View>
