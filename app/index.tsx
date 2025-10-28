@@ -8,7 +8,7 @@ export default function Index() {
   if (!isLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
   }
@@ -17,6 +17,6 @@ export default function Index() {
     return <Redirect href="/(main)/home" />;
   }
 
-  return <Redirect href="/(auth)/sign-in" />;
+  return <Redirect href="/(auth)/welcome" />;
 }
 

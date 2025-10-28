@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 
 expo-env.d.ts
 # @end expo-cli
+
+# Manualy added files:
+GOOGLE_OAUTH_SETUP.md

@@ -9,30 +9,30 @@ export default function HomeScreen() {
 
   if (!isLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAFA' }}>
+        <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
   }
 
   if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
+    return <Redirect href="/(auth)/welcome" />;
   }
 
   const handleSignOut = async () => {
     await signOut();
-    router.replace('/(auth)/sign-in');
+    router.replace('/(auth)/welcome');
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-      <Text style={{ fontSize: 24, marginBottom: 16 }}>Welcome to Todoly</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#FAFAFA' }}>
+      <Text style={{ fontSize: 32, fontWeight: '700', marginBottom: 16, color: '#1A1A1A' }}>Welcome to Todoly</Text>
       {user?.primaryEmailAddress?.emailAddress && (
-        <Text style={{ marginBottom: 24, color: '#666' }}>
+        <Text style={{ marginBottom: 32, color: '#6B7280', fontSize: 16 }}>
           {user.primaryEmailAddress.emailAddress}
         </Text>
       )}
-      <Button title="Sign Out" onPress={handleSignOut} />
+      <Button title="Sign Out" onPress={handleSignOut} color="#6366F1" />
     </View>
   );
 }
