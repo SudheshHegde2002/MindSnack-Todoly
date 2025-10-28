@@ -14,7 +14,7 @@ export default function Index() {
   }
 
   if (isSignedIn) {
-    return <Redirect href="/(main)/home" />;
+    return <Redirect href="/(main)/active" />;
   }
 
   return <Redirect href="/(auth)/welcome" />;

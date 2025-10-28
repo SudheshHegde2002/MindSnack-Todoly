@@ -19,7 +19,7 @@ export default function SignInScreen() {
             emailAddress,
             password,
             setError,
-            onSuccess: () => router.replace('/(main)/home'),
+            onSuccess: () => router.replace('/(main)/active'),
         });
     };
 //The sign in screen

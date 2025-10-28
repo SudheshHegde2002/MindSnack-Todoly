@@ -20,20 +20,5 @@ export default function HomeScreen() {
         return <Redirect href="/(auth)/welcome" />;
     }
 
-    const handleSignOut = async () => {
-        await signOut();
-        router.replace('/(auth)/welcome');
-    };
-
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Welcome to Todoly</Text>
-            {user?.primaryEmailAddress?.emailAddress && (
-                <Text style={styles.emailText}>
-                    {user.primaryEmailAddress.emailAddress}
-                </Text>
-            )}
-            <Button title="Sign Out" onPress={handleSignOut} color="#6366F1" />
-        </View>
-    );
+    return <Redirect href="/(main)/active" />;
 }

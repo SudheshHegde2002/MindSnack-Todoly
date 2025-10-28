@@ -29,7 +29,7 @@ export default function WelcomeScreen() {
   }, [router]);
 
   if (isLoaded && isSignedIn) {
-    return <Redirect href="/(main)/home" />;
+    return <Redirect href="/(main)/active" />;
   }
 
   if (isAuthenticating) {
