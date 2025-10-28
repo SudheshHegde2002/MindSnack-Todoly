@@ -3,13 +3,32 @@ import * as SecureStore from 'expo-secure-store';
 import { Slot } from 'expo-router';
 
 const tokenCache = {
-  getToken: () => SecureStore.getItemAsync('clerk_token'),
-  saveToken: (token: string) => SecureStore.setItemAsync('clerk_token', token),
+  async getToken(key: string) {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch (error) {
+      console.error('Error saving token:', error);
+    }
+  },
 };
+
+const publishableKey = 'pk_test_bm92ZWwtYnJlYW0tNjQuY2xlcmsuYWNjb3VudHMuZGV2JA';
+
+if (!publishableKey) {
+  throw new Error('Missing Clerk publishable key');
+}
 
 export default function RootLayout() {
   return (
-    <ClerkProvider tokenCache={tokenCache}>
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <Slot />
     </ClerkProvider>
   );
