@@ -37,25 +37,32 @@ class TodoService {
     };
 
     localDb.insertTodo(todo);
-
+    console.log('Todo added to SQLite:', todo);
     if (this.isOnline) {
       try {
-        const { error } = await supabase.from('TodoTable').insert({
-          id: todo.id,
+        console.log('Attempting to insert into Supabase:', {
           user_id: todo.user_id,
           title: todo.title,
           description: todo.description,
           is_completed: false,
-          created_at: todo.created_at,
         });
 
-        if (!error) {
-          localDb.markAsSynced(id);
-        } else {
+        const { data, error } = await supabase.from('TodoTable').insert({
+          user_id: todo.user_id,
+          title: todo.title,
+          description: todo.description,
+          is_completed: false,
+        }).select();
+
+        if (error) {
+          console.error('Supabase insert error:', JSON.stringify(error, null, 2));
           localDb.addToQueue('add', id, todo);
+        } else {
+          console.log('Supabase insert success:', data);
+          localDb.markAsSynced(id);
         }
       } catch (error) {
-        console.error('Failed to sync add:', error);
+        console.error('Failed to sync add (catch):', error);
         localDb.addToQueue('add', id, todo);
       }
     } else {
@@ -181,15 +188,18 @@ class TodoService {
 
           switch (item.action) {
             case 'add':
-              await supabase.from('TodoTable').insert({
-                id: data.id,
+              const { error: addError } = await supabase.from('TodoTable').insert({
                 user_id: data.user_id,
                 title: data.title,
                 description: data.description,
                 is_completed: data.is_completed === 1,
-                created_at: data.created_at,
               });
-              localDb.markAsSynced(data.id);
+              
+              if (addError) {
+                console.error('Queue sync add error:', addError);
+                throw addError;
+              }
+              localDb.markAsSynced(item.todo_id);
               break;
 
             case 'update':

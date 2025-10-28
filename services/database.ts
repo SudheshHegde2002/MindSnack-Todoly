@@ -7,10 +7,10 @@ export type LocalTodo = {
   user_id: string;
   title: string;
   description: string | null;
-  is_completed: number;
+  is_completed: number; // SQLite stores as 0 or 1
   created_at: string;
   updated_at: string;
-  synced: number;
+  synced: number; // SQLite stores as 0 or 1
 };
 
 export type QueueItem = {
@@ -68,12 +68,12 @@ export const localDb = {
   },
 
   updateTodo: (id: string, updates: Partial<LocalTodo>) => {
-    const fields = Object.keys(updates).filter(k => k !== 'id').map(k => `${k} = ?`).join(', ');
-    const values = Object.keys(updates).filter(k => k !== 'id').map(k => updates[k as keyof LocalTodo]);
+    const fields = Object.keys(updates).filter(k => k !== 'id' && k !== 'synced').map(k => `${k} = ?`).join(', ');
+    const values = Object.keys(updates).filter(k => k !== 'id' && k !== 'synced').map(k => updates[k as keyof LocalTodo]);
     
     db.runSync(
       `UPDATE todos SET ${fields}, synced = 0, updated_at = ? WHERE id = ?`,
-      [...values, new Date().toISOString(), id]
+      [...values, new Date().toISOString(), id] as any[]
     );
   },
 
