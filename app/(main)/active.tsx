@@ -1,6 +1,7 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Redirect, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './styles/todoStyles';
 
 export default function ActiveScreen() {
@@ -45,6 +46,10 @@ export default function ActiveScreen() {
         <Text style={styles.emptyTitle}>No Active Tasks</Text>
         <Text style={styles.emptySubtitle}>Add your first task to get started</Text>
       </View>
+
+      <TouchableOpacity style={styles.fab} onPress={() => console.log('Add task')}>
+        <MaterialIcons name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }

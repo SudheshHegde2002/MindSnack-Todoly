@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { Redirect } from 'expo-router';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './styles/todoStyles';
 
 export default function CompletedScreen() {
@@ -24,6 +25,10 @@ export default function CompletedScreen() {
         <Text style={styles.emptyTitle}>No Completed Tasks</Text>
         <Text style={styles.emptySubtitle}>Complete tasks to see them here</Text>
       </View>
+
+      <TouchableOpacity style={styles.fab} onPress={() => console.log('Add task')}>
+        <MaterialIcons name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
