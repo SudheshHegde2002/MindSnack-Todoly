@@ -22,13 +22,15 @@ export default function HomeScreen() {
   const { todos } = useTodos();
   
   const headerButtonScale = useRef(new Animated.Value(1)).current;
+  // Animation for group cards
+  const groupCardScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.spring(headerButtonScale, {
-      toValue: selectionMode ? 1.1 : 1,
+    Animated.spring(groupCardScale, {
+      toValue: selectionMode ? 0.95 : 1,
       useNativeDriver: true,
       tension: 150,
-      friction: 7,
+      friction: 4,
     }).start();
   }, [selectionMode]);
 
@@ -133,7 +135,6 @@ export default function HomeScreen() {
 
   const renderGroupItem = ({ item }: { item: LocalGroup }) => {
     const isSelected = selectedGroupIds.has(item.id);
-    
     // Calculate task counts for this group
     const groupTodos = todos.filter(t => t.group_id === item.id);
     const activeCount = groupTodos.filter(t => t.is_completed === 0).length;
@@ -141,77 +142,80 @@ export default function HomeScreen() {
     const hasNoTasks = activeCount === 0 && completedCount === 0;
 
     return (
-      <TouchableOpacity
-        style={[
-          {
-            backgroundColor: '#FFFFFF',
-            borderRadius: 12,
-            marginHorizontal: 8,
-            marginBottom: 12,
-            padding: 16,
-          },
-          selectionMode && { borderWidth: 2, borderColor: '#E5E7EB' },
-          isSelected && { backgroundColor: '#EEF2FF', borderColor: '#6366F1', borderWidth: 2 },
-        ]}
-        onPress={() => {
-          if (selectionMode) {
-            handleSelect(item.id);
-          } else {
-            router.push(`/(main)/group/${item.id}`);
-          }
-        }}
-        onLongPress={() => handleLongPress(item.id)}
-        activeOpacity={0.7}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-          {selectionMode && (
-            <MaterialIcons 
-              name={isSelected ? "check-box" : "check-box-outline-blank"} 
-              size={24} 
-              color={isSelected ? "#6366F1" : "#D1D5DB"}
-              style={{ marginRight: 12, marginTop: 2 }}
-            />
-          )}
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A', flex: 1 }}>
-                {item.name}
-              </Text>
-              {!selectionMode && (
-                <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
+      <Animated.View style={{ transform: [{ scale: selectionMode ? groupCardScale : 1 }]}}>
+        <TouchableOpacity
+          style={[
+            {
+              backgroundColor: '#FFFFFF',
+              borderRadius: 12,
+              marginHorizontal: 0,
+              marginBottom: 12,
+              padding: 16,
+              width: '100%'
+            },
+            selectionMode && { borderWidth: 2, borderColor: '#E5E7EB' },
+            isSelected && { backgroundColor: '#EEF2FF', borderColor: '#6366F1', borderWidth: 2 },
+          ]}
+          onPress={() => {
+            if (selectionMode) {
+              handleSelect(item.id);
+            } else {
+              router.push(`/(main)/group/${item.id}`);
+            }
+          }}
+          onLongPress={() => handleLongPress(item.id)}
+          activeOpacity={0.7}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+            {selectionMode && (
+              <MaterialIcons 
+                name={isSelected ? "check-box" : "check-box-outline-blank"} 
+                size={24} 
+                color={isSelected ? "#6366F1" : "#D1D5DB"}
+                style={{ marginRight: 12, marginTop: 2 }}
+              />
+            )}
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A', flex: 1 }}>
+                  {item.name}
+                </Text>
+                {!selectionMode && (
+                  <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
+                )}
+              </View>
+              {hasNoTasks ? (
+                <Text style={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic', marginBottom: 6 }}>
+                  No tasks, Add now!
+                </Text>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="radio-button-unchecked" size={14} color="#6366F1" />
+                    <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                      {activeCount} active
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="check-circle" size={14} color="#10B981" />
+                    <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                      {completedCount} completed
+                    </Text>
+                  </View>
+                </View>
+              )}
+              {item.synced === 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <MaterialIcons name="sync" size={12} color="#EF4444" />
+                  <Text style={{ fontSize: 11, color: '#EF4444', fontStyle: 'italic' }}>
+                    Pending sync
+                  </Text>
+                </View>
               )}
             </View>
-            {hasNoTasks ? (
-              <Text style={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic', marginBottom: 6 }}>
-                No tasks, Add now!
-              </Text>
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <MaterialIcons name="radio-button-unchecked" size={14} color="#6366F1" />
-                  <Text style={{ fontSize: 13, color: '#6B7280' }}>
-                    {activeCount} active
-                  </Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <MaterialIcons name="check-circle" size={14} color="#10B981" />
-                  <Text style={{ fontSize: 13, color: '#6B7280' }}>
-                    {completedCount} completed
-                  </Text>
-                </View>
-              </View>
-            )}
-            {item.synced === 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                <MaterialIcons name="sync" size={12} color="#EF4444" />
-                <Text style={{ fontSize: 11, color: '#EF4444', fontStyle: 'italic' }}>
-                  Pending sync
-                </Text>
-              </View>
-            )}
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 

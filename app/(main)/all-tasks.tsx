@@ -74,7 +74,7 @@ export default function AllTasksScreen() {
       toValue: selectionMode ? 1.1 : 1,
       useNativeDriver: true,
       tension: 150,
-      friction: 7,
+      friction: 4,
     }).start();
   }, [selectionMode]);
 
