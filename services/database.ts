@@ -44,6 +44,14 @@ export const initDatabase = () => {
       timestamp TEXT NOT NULL
     );
   `);
+
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS deleted_todos (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      deleted_at TEXT NOT NULL
+    );
+  `);
 };
 
 export const localDb = {
@@ -100,8 +108,34 @@ export const localDb = {
     db.runSync('DELETE FROM sync_queue WHERE id = ?', [id]);
   },
 
+  removeFromQueueByTodoId: (todoId: string) => {
+    db.runSync('DELETE FROM sync_queue WHERE todo_id = ?', [todoId]);
+  },
+
+  updateQueueTodoId: (oldId: string, newId: string) => {
+    db.runSync('UPDATE sync_queue SET todo_id = ? WHERE todo_id = ?', [newId, oldId]);
+  },
+
   clearQueue: () => {
     db.runSync('DELETE FROM sync_queue');
+  },
+
+  markAsDeleted: (id: string, userId: string) => {
+    db.runSync(
+      'INSERT OR REPLACE INTO deleted_todos (id, user_id, deleted_at) VALUES (?, ?, ?)',
+      [id, userId, new Date().toISOString()]
+    );
+  },
+
+  isDeleted: (id: string): boolean => {
+    const result = db.getFirstSync<{ id: string }>('SELECT id FROM deleted_todos WHERE id = ?', [id]);
+    return result !== null;
+  },
+
+  clearOldDeletedTodos: (daysOld: number = 30) => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+    db.runSync('DELETE FROM deleted_todos WHERE deleted_at < ?', [cutoffDate.toISOString()]);
   },
 };
 

@@ -72,6 +72,10 @@ class TodoService {
           });
           localDb.markAsSynced(supabaseId);
           
+          // Update any queued operations for this todo to use the new ID
+          localDb.updateQueueTodoId(tempId, supabaseId);
+          console.log('Updated queue items from temp ID to Supabase ID:', tempId, '->', supabaseId);
+          
           return { ...todo, id: supabaseId, synced: 1 };
         }
       } catch (error) {
@@ -92,6 +96,13 @@ class TodoService {
     const newCompleted = todo.is_completed === 1 ? 0 : 1;
     localDb.updateTodo(id, { is_completed: newCompleted });
     console.log('Todo updated in SQLite:', { id, is_completed: newCompleted });
+    
+    // If it's a temp ID, just queue it for later sync
+    if (id.startsWith('temp_')) {
+      localDb.addToQueue('update', id, { is_completed: newCompleted });
+      return;
+    }
+
     if (this.isOnline) {
       try {
         const { error } = await supabase
@@ -101,7 +112,9 @@ class TodoService {
 
         if (!error) {
           localDb.markAsSynced(id);
+          console.log('Successfully synced toggle for:', id);
         } else {
+          console.error('Failed to sync toggle:', error);
           localDb.addToQueue('update', id, { is_completed: newCompleted });
         }
       } catch (error) {
@@ -117,14 +130,30 @@ class TodoService {
     const todo = localDb.getTodoById(id);
     if (!todo) return;
 
+    const userId = todo.user_id;
+
+    // Check if this is a temp ID (never synced to Supabase)
+    const isTempId = id.startsWith('temp_');
+
     localDb.deleteTodo(id);
+    localDb.markAsDeleted(id, userId);
+
+    if (isTempId) {
+      // If it's a temp ID, just remove any pending add operations from queue
+      localDb.removeFromQueueByTodoId(id);
+      console.log('Deleted todo with temp ID, removed from queue:', id);
+      return;
+    }
 
     if (this.isOnline) {
       try {
         const { error } = await supabase.from('TodoTable').delete().eq('id', id);
 
         if (error) {
+          console.error('Failed to delete from Supabase:', error);
           localDb.addToQueue('delete', id, todo);
+        } else {
+          console.log('Successfully deleted from Supabase:', id);
         }
       } catch (error) {
         console.error('Failed to sync delete:', error);
@@ -153,6 +182,12 @@ class TodoService {
 
       if (data) {
         data.forEach((todo: Todo) => {
+          // Skip if this todo was deleted locally
+          if (localDb.isDeleted(todo.id)) {
+            console.log('Skipping deleted todo from Supabase:', todo.id);
+            return;
+          }
+
           const existing = localDb.getTodoById(todo.id);
           
           if (!existing) {
@@ -182,6 +217,9 @@ class TodoService {
           }
         });
       }
+      
+      // Clean up old deleted todos (older than 30 days)
+      localDb.clearOldDeletedTodos(30);
     } catch (error) {
       console.error('Failed to fetch from Supabase:', error);
     }
@@ -193,72 +231,117 @@ class TodoService {
     this.syncInProgress = true;
 
     try {
-      const queue = localDb.getQueue();
+      // Clean up orphaned temp ID operations (updates/deletes for todos that were never added)
+      let queue = localDb.getQueue();
+      const tempIdUpdatesDeletes = queue.filter(
+        item => (item.action === 'update' || item.action === 'delete') && item.todo_id.startsWith('temp_')
+      );
+      
+      for (const item of tempIdUpdatesDeletes) {
+        console.log(`Cleaning up orphaned ${item.action} operation for temp ID:`, item.todo_id);
+        localDb.removeFromQueue(item.id);
+      }
+      
+      // Process in two passes to handle temp ID -> real ID transitions
+      // Pass 1: Process all 'add' operations first
+      queue = localDb.getQueue();
+      const addItems = queue.filter(item => item.action === 'add');
+      
+      for (const item of addItems) {
+        try {
+          const data = JSON.parse(item.data);
+          
+          const { data: insertData, error: addError } = await supabase.from('TodoTable').insert({
+            user_id: data.user_id,
+            title: data.title,
+            description: data.description,
+            is_completed: data.is_completed === 1,
+          }).select();
+          
+          if (addError) {
+            console.error('Queue sync add error:', addError);
+            continue; // Skip this item but continue with others
+          }
+          
+          if (insertData && insertData[0]) {
+            const supabaseId = insertData[0].id;
+            const oldTempId = item.todo_id;
+            
+            // Update local database with Supabase ID
+            localDb.deleteTodo(oldTempId);
+            localDb.insertTodo({
+              id: supabaseId,
+              user_id: data.user_id,
+              title: data.title,
+              description: data.description,
+              is_completed: data.is_completed,
+              created_at: insertData[0].created_at,
+              updated_at: insertData[0].updated_at || insertData[0].created_at,
+            });
+            localDb.markAsSynced(supabaseId);
+            
+            // Update any other queued operations for this todo to use the new ID
+            localDb.updateQueueTodoId(oldTempId, supabaseId);
+            console.log('Synced add and updated queue items from temp ID to Supabase ID:', oldTempId, '->', supabaseId);
+            
+            // Remove from queue only after successful sync
+            localDb.removeFromQueue(item.id);
+          }
+        } catch (error) {
+          console.error(`Failed to sync add item ${item.id}:`, error);
+        }
+      }
 
-      for (const item of queue) {
+      // Pass 2: Process all 'update' and 'delete' operations (now with real IDs)
+      queue = localDb.getQueue(); // Refresh queue to get updated IDs
+      const otherItems = queue.filter(item => item.action !== 'add');
+      
+      for (const item of otherItems) {
         try {
           const data = JSON.parse(item.data);
 
-          switch (item.action) {
-            case 'add':
-              const { data: insertData, error: addError } = await supabase.from('TodoTable').insert({
-                user_id: data.user_id,
-                title: data.title,
-                description: data.description,
-                is_completed: data.is_completed === 1,
-              }).select();
-              
-              if (addError) {
-                console.error('Queue sync add error:', addError);
-                throw addError;
-              }
-              
-              if (insertData && insertData[0]) {
-                const supabaseId = insertData[0].id;
-                
-                // Update local database with Supabase ID
-                localDb.deleteTodo(item.todo_id);
-                localDb.insertTodo({
-                  id: supabaseId,
-                  user_id: data.user_id,
-                  title: data.title,
-                  description: data.description,
-                  is_completed: data.is_completed,
-                  created_at: insertData[0].created_at,
-                  updated_at: insertData[0].updated_at || insertData[0].created_at,
-                });
-                localDb.markAsSynced(supabaseId);
-              }
-              break;
+          // Skip if still has temp ID (add operation must have failed)
+          if (item.todo_id.startsWith('temp_')) {
+            console.log(`Skipping ${item.action} for temp ID (add operation not completed):`, item.todo_id);
+            continue;
+          }
 
+          switch (item.action) {
             case 'update':
               const { error: updateError } = await supabase
                 .from('TodoTable')
                 .update({
                   is_completed: data.is_completed === 1,
-                  updated_at: new Date().toISOString(),
                 })
                 .eq('id', item.todo_id);
                 
               if (!updateError) {
                 localDb.markAsSynced(item.todo_id);
+                console.log('Successfully synced update for:', item.todo_id);
+                localDb.removeFromQueue(item.id);
               } else {
                 console.error('Queue sync update error:', updateError);
-                throw updateError;
               }
               break;
 
             case 'delete':
+              // Skip if it's a temp ID (todo was never synced to Supabase)
+              if (item.todo_id.startsWith('temp_')) {
+                console.log('Removing delete queue item for temp ID (never synced):', item.todo_id);
+                localDb.removeFromQueue(item.id);
+                break;
+              }
+              
               const { error: deleteError } = await supabase.from('TodoTable').delete().eq('id', item.todo_id);
               
-              if (deleteError) {
+              if (!deleteError) {
+                console.log('Successfully synced delete for:', item.todo_id);
+                localDb.removeFromQueue(item.id);
+              } else {
                 console.error('Queue sync delete error:', deleteError);
-                throw deleteError;
               }
               break;
           }
-
-          localDb.removeFromQueue(item.id);
         } catch (error) {
           console.error(`Failed to sync queue item ${item.id}:`, error);
         }
@@ -274,6 +357,26 @@ class TodoService {
 
   getOnlineStatus(): boolean {
     return this.isOnline;
+  }
+
+  // Utility method to clean up orphaned queue items (for debugging/maintenance)
+  cleanupOrphanedQueueItems(): void {
+    const queue = localDb.getQueue();
+    let cleanedCount = 0;
+
+    queue.forEach(item => {
+      // Remove updates/deletes for temp IDs that no longer exist in the database
+      if ((item.action === 'update' || item.action === 'delete') && item.todo_id.startsWith('temp_')) {
+        const todo = localDb.getTodoById(item.todo_id);
+        if (!todo) {
+          console.log(`Removing orphaned ${item.action} for non-existent temp ID:`, item.todo_id);
+          localDb.removeFromQueue(item.id);
+          cleanedCount++;
+        }
+      }
+    });
+
+    console.log(`Cleaned up ${cleanedCount} orphaned queue items`);
   }
 }
 
