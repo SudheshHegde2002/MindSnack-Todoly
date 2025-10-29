@@ -6,6 +6,7 @@ import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 're
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import TodoItem from './components/TodoItem';
+import OfflineIndicator from './components/OfflineIndicator';
 import { useTodos } from '../../hooks/useTodos';
 import { useGroups } from '../../hooks/useGroups';
 
@@ -185,6 +186,8 @@ export default function AllTasksScreen() {
           stickySectionHeadersEnabled={false}
         />
       )}
+
+      <OfflineIndicator />
     </View>
   );
 }

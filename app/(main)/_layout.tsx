@@ -11,9 +11,9 @@ export default function MainLayout() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 60,
+          paddingBottom: 12,
+          paddingTop: 12,
+          height: 70,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -113,6 +113,12 @@ export default function MainLayout() {
       />
       <Tabs.Screen
         name="components/RenameGroupModal"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="components/OfflineIndicator"
         options={{
           href: null,
         }}

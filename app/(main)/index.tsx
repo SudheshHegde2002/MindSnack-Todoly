@@ -6,7 +6,9 @@ import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import AddGroupModal from './components/AddGroupModal';
+import OfflineIndicator from './components/OfflineIndicator';
 import { useGroups } from '../../hooks/useGroups';
+import { useTodos } from '../../hooks/useTodos';
 import { LocalGroup } from '../../services/database';
 
 export default function HomeScreen() {
@@ -17,6 +19,7 @@ export default function HomeScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const { groups, isLoading, deleteGroup } = useGroups();
+  const { todos } = useTodos();
   
   const headerButtonScale = useRef(new Animated.Value(1)).current;
 
@@ -130,14 +133,25 @@ export default function HomeScreen() {
 
   const renderGroupItem = ({ item }: { item: LocalGroup }) => {
     const isSelected = selectedGroupIds.has(item.id);
+    
+    // Calculate task counts for this group
+    const groupTodos = todos.filter(t => t.group_id === item.id);
+    const activeCount = groupTodos.filter(t => t.is_completed === 0).length;
+    const completedCount = groupTodos.filter(t => t.is_completed === 1).length;
+    const hasNoTasks = activeCount === 0 && completedCount === 0;
 
     return (
       <TouchableOpacity
         style={[
-          styles.container,
-          { marginHorizontal: 16, marginBottom: 12, padding: 20 },
+          {
+            backgroundColor: '#FFFFFF',
+            borderRadius: 12,
+            marginHorizontal: 8,
+            marginBottom: 12,
+            padding: 16,
+          },
           selectionMode && { borderWidth: 2, borderColor: '#E5E7EB' },
-          isSelected && { backgroundColor: '#EEF2FF', borderColor: '#6366F1' },
+          isSelected && { backgroundColor: '#EEF2FF', borderColor: '#6366F1', borderWidth: 2 },
         ]}
         onPress={() => {
           if (selectionMode) {
@@ -149,26 +163,53 @@ export default function HomeScreen() {
         onLongPress={() => handleLongPress(item.id)}
         activeOpacity={0.7}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           {selectionMode && (
             <MaterialIcons 
               name={isSelected ? "check-box" : "check-box-outline-blank"} 
               size={24} 
               color={isSelected ? "#6366F1" : "#D1D5DB"}
-              style={{ marginRight: 12 }}
+              style={{ marginRight: 12, marginTop: 2 }}
             />
           )}
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#1A1A1A', marginBottom: 4 }}>
-              {item.name}
-            </Text>
-            <Text style={{ fontSize: 14, color: '#6B7280' }}>
-              Tap to view tasks
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A', flex: 1 }}>
+                {item.name}
+              </Text>
+              {!selectionMode && (
+                <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
+              )}
+            </View>
+            {hasNoTasks ? (
+              <Text style={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic', marginBottom: 6 }}>
+                No tasks, Add now!
+              </Text>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialIcons name="radio-button-unchecked" size={14} color="#6366F1" />
+                  <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                    {activeCount} active
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialIcons name="check-circle" size={14} color="#10B981" />
+                  <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                    {completedCount} completed
+                  </Text>
+                </View>
+              </View>
+            )}
+            {item.synced === 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <MaterialIcons name="sync" size={12} color="#EF4444" />
+                <Text style={{ fontSize: 11, color: '#EF4444', fontStyle: 'italic' }}>
+                  Pending sync
+                </Text>
+              </View>
+            )}
           </View>
-          {!selectionMode && (
-            <MaterialIcons name="chevron-right" size={24} color="#9CA3AF" />
-          )}
         </View>
       </TouchableOpacity>
     );
@@ -206,7 +247,10 @@ export default function HomeScreen() {
         />
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={handleCreateGroup}>
+      <TouchableOpacity 
+        style={styles.fab}
+        onPress={handleCreateGroup}
+      >
         <MaterialIcons name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
 
@@ -214,6 +258,8 @@ export default function HomeScreen() {
         visible={addGroupVisible}
         onClose={() => setAddGroupVisible(false)}
       />
+
+      <OfflineIndicator />
     </View>
   );
 }

@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'rea
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './styles/todoStyles';
 import { styles as settingsStyles } from './styles/settingsModalStyles';
+import OfflineIndicator from './components/OfflineIndicator';
 
 export default function ProfileScreen() {
   const { isSignedIn, isLoaded, signOut } = useAuth();
@@ -71,6 +72,8 @@ export default function ProfileScreen() {
           <Text style={settingsStyles.footerText}>Todoly v1.0.0</Text>
         </View>
       </ScrollView>
+
+      <OfflineIndicator />
     </View>
   );
 }
