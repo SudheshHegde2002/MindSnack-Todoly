@@ -139,7 +139,7 @@ export default function TodoItem({
           onPress={() => onToggleComplete(todo.id)}
         >
           {isCompleted ? (
-            <MaterialIcons name="check-circle" size={24} color="#6366F1" />
+            <MaterialIcons name="check-circle" size={24} color="#10B981" />
           ) : (
             <MaterialIcons name="radio-button-unchecked" size={24} color="#D1D5DB" />
           )}
