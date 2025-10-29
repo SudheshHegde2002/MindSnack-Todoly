@@ -14,6 +14,7 @@ type TodoItemProps = {
   isSelected?: boolean;
   onSelect?: (id: string) => void;
   onLongPress?: (id: string) => void;
+  groupName?: string;
 };
 
 export default function TodoItem({ 
@@ -23,7 +24,8 @@ export default function TodoItem({
   selectionMode = false,
   isSelected = false,
   onSelect,
-  onLongPress: onLongPressCallback
+  onLongPress: onLongPressCallback,
+  groupName
 }: TodoItemProps) {
   const isCompleted = todo.is_completed === 1;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -153,12 +155,20 @@ export default function TodoItem({
             {todo.description}
           </Text>
         ) : null}
-        {!todo.synced && (
-          <View style={styles.syncBadge}>
-            <MaterialIcons name="sync" size={12} color="#EF4444" />
-            <Text style={styles.syncText}>Pending sync</Text>
-          </View>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+          {groupName && (
+            <View style={styles.groupBadge}>
+              <MaterialIcons name="folder" size={12} color="#6366F1" />
+              <Text style={styles.groupBadgeText}>{groupName}</Text>
+            </View>
+          )}
+          {!todo.synced && (
+            <View style={styles.syncBadge}>
+              <MaterialIcons name="sync" size={12} color="#EF4444" />
+              <Text style={styles.syncText}>Pending sync</Text>
+            </View>
+          )}
+        </View>
       </View>
     </AnimatedTouchable>
   );

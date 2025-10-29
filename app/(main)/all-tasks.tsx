@@ -1,12 +1,152 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { Redirect } from 'expo-router';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, SectionList, Animated, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
+import TodoItem from './components/TodoItem';
+import SettingsModal from './components/SettingsModal';
+import { useTodos } from '../../hooks/useTodos';
+import { useGroups } from '../../hooks/useGroups';
 
 export default function AllTasksScreen() {
   const { isSignedIn, isLoaded } = useAuth();
+  const navigation = useNavigation();
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
+  const { todos, isLoading, toggleComplete, deleteTodo, deleteTodos } = useTodos();
+  const { groups } = useGroups();
+  
+  const headerButtonScale = useRef(new Animated.Value(1)).current;
 
-  if (!isLoaded) {
+  // Create a map for quick group lookup
+  const groupMap = useMemo(() => {
+    const map = new Map();
+    groups.forEach(group => {
+      map.set(group.id, group.name);
+    });
+    return map;
+  }, [groups]);
+
+  // Sort and group todos
+  const sections = useMemo(() => {
+    const activeTodos = todos
+      .filter(t => t.is_completed === 0)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    
+    const completedTodos = todos
+      .filter(t => t.is_completed === 1)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    
+    const result = [];
+    if (activeTodos.length > 0) {
+      result.push({ title: 'Active', data: activeTodos });
+    }
+    if (completedTodos.length > 0) {
+      result.push({ title: 'Completed', data: completedTodos });
+    }
+    return result;
+  }, [todos]);
+
+  useEffect(() => {
+    Animated.spring(headerButtonScale, {
+      toValue: selectionMode ? 1.1 : 1,
+      useNativeDriver: true,
+      tension: 150,
+      friction: 7,
+    }).start();
+  }, [selectionMode]);
+
+  const handleLongPress = (todoId: string) => {
+    setSelectionMode(true);
+    setSelectedTodoIds(new Set([todoId]));
+  };
+
+  const handleSelect = (todoId: string) => {
+    setSelectedTodoIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(todoId)) {
+        newSet.delete(todoId);
+      } else {
+        newSet.add(todoId);
+      }
+      if (newSet.size === 0) {
+        setSelectionMode(false);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTodoIds.size === 0) return;
+
+    Alert.alert(
+      'Delete Todos',
+      `Are you sure you want to delete ${selectedTodoIds.size} todo${selectedTodoIds.size > 1 ? 's' : ''}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteTodos(Array.from(selectedTodoIds));
+            setSelectedTodoIds(new Set());
+            setSelectionMode(false);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedTodoIds(new Set());
+  };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+          {selectionMode ? (
+            <>
+              <View style={{ 
+                backgroundColor: '#EEF2FF', 
+                paddingHorizontal: 12, 
+                paddingVertical: 6, 
+                borderRadius: 12, 
+                marginRight: 12 
+              }}>
+                <Text style={{ color: '#6366F1', fontWeight: '600', fontSize: 14 }}>
+                  {selectedTodoIds.size} selected
+                </Text>
+              </View>
+              <Animated.View style={{ transform: [{ scale: headerButtonScale }], marginRight: 16 }}>
+                <TouchableOpacity onPress={handleCancelSelection}>
+                  <MaterialIcons name="close" size={24} color="#6366F1" />
+                </TouchableOpacity>
+              </Animated.View>
+              <Animated.View style={{ transform: [{ scale: headerButtonScale }] }}>
+                <TouchableOpacity onPress={handleBulkDelete}>
+                  <MaterialIcons name="delete" size={24} color="#EF4444" />
+                </TouchableOpacity>
+              </Animated.View>
+            </>
+          ) : (
+            <TouchableOpacity onPress={() => setSettingsVisible(true)}>
+              <MaterialIcons name="settings" size={24} color="#6366F1" />
+            </TouchableOpacity>
+          )}
+        </View>
+      ),
+    });
+  }, [navigation, selectionMode, selectedTodoIds, headerButtonScale]);
+
+  if (!isLoaded || isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
@@ -20,10 +160,42 @@ export default function AllTasksScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>All Tasks</Text>
-        <Text style={styles.emptySubtitle}>Coming soon...</Text>
-      </View>
+      {todos.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyTitle}>No Tasks Yet</Text>
+          <Text style={styles.emptySubtitle}>Create a group and add your first task</Text>
+        </View>
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TodoItem
+              todo={item}
+              onToggleComplete={toggleComplete}
+              onDelete={deleteTodo}
+              selectionMode={selectionMode}
+              isSelected={selectedTodoIds.has(item.id)}
+              onSelect={handleSelect}
+              onLongPress={handleLongPress}
+              groupName={groupMap.get(item.group_id || '')}
+            />
+          )}
+          renderSectionHeader={({ section: { title } }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>{title}</Text>
+            </View>
+          )}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
+        />
+      )}
+
+      <SettingsModal
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+      />
     </View>
   );
 }

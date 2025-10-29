@@ -42,9 +42,18 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   groupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    backgroundColor: '#EEF2FF',
+    gap: 4,
+  },
+  groupBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6366F1',
   },
   groupText: {
     fontSize: 11,
@@ -67,7 +76,6 @@ export const styles = StyleSheet.create({
   syncBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
     gap: 4,
   },
   syncText: {
