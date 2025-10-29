@@ -28,8 +28,7 @@ export const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   modalBody: {
-    padding: 20,
-    paddingBottom: 20,
+    padding: 20
   },
   label: {
     fontSize: 14,

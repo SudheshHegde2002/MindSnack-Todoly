@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from '../styles/addTodoModalStyles';
@@ -65,18 +66,35 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
     onClose();
   };
 
-  const handleCreateGroup = () => {
-    if (newGroupName.trim()) {
-      // Check if group with this name already exists
-      const existingGroup = uniqueGroups.find(g => g.name.toLowerCase() === newGroupName.trim().toLowerCase());
-      if (existingGroup) {
-        Alert.alert('Group Exists', `A group named "${newGroupName.trim()}" already exists.`);
-        return;
-      }
-      addGroup(newGroupName.trim());
-      setNewGroupName('');
-      setIsCreatingGroup(false);
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) return;
+    
+    // Check if group with this name already exists
+    const existingGroup = uniqueGroups.find(g => g.name.toLowerCase() === newGroupName.trim().toLowerCase());
+    if (existingGroup) {
+      Alert.alert('Group Exists', `A group named "${newGroupName.trim()}" already exists.`);
+      return;
     }
+    
+    const groupName = newGroupName.trim();
+    
+    // Dismiss keyboard
+    Keyboard.dismiss();
+    
+    // Add the group
+    await addGroup(groupName);
+    
+    // Wait for groups to update and select the new group
+    setTimeout(() => {
+      const newGroup = groups.find(g => g.name === groupName);
+      if (newGroup) {
+        setSelectedGroupId(newGroup.id);
+        console.log('Auto-selected new group:', newGroup.id, groupName);
+      }
+    }, 300);
+    
+    setNewGroupName('');
+    setIsCreatingGroup(false);
   };
 
   return (
@@ -99,7 +117,11 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={styles.modalBody} 
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
+          >
             <Text style={styles.label}>Title</Text>
             <TextInput
               style={styles.input}
@@ -160,12 +182,15 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
                     placeholder="Enter group name"
                     value={newGroupName}
                     onChangeText={setNewGroupName}
+                    onSubmitEditing={handleCreateGroup}
+                    returnKeyType="done"
                     autoFocus
                   />
                   <TouchableOpacity
                     onPress={() => {
                       setIsCreatingGroup(false);
                       setNewGroupName('');
+                      Keyboard.dismiss();
                     }}
                     style={{
                       width: 40,
