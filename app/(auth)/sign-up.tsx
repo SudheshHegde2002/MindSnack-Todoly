@@ -32,7 +32,7 @@ export default function SignUpScreen() {
         isLoaded,
         code,
         setError,
-        onSuccess: () => router.replace('/(main)/active'),
+        onSuccess: () => router.replace('/(main)/'),
     });
   };
 //Conditional rendering to check if the user is pending verification(otp screen)

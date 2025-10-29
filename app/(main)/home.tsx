@@ -20,5 +20,5 @@ export default function HomeScreen() {
         return <Redirect href="/(auth)/welcome" />;
     }
 
-    return <Redirect href="/(main)/active" />;
+    return <Redirect href="/(main)/" />;
 }

@@ -21,15 +21,20 @@ export default function WelcomeScreen() {
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
+        // Explicitly navigate to home after successful auth
+        router.replace('/(main)/');
+      } else {
+        // If OAuth didn't complete, reset the state
+        setIsAuthenticating(false);
       }
     } catch (err) {
       console.error('OAuth error:', err);
       setIsAuthenticating(false);
     }
-  }, [router]);
+  }, [router, startOAuthFlow]);
 
   if (isLoaded && isSignedIn) {
-    return <Redirect href="/(main)/active" />;
+    return <Redirect href="/(main)/" />;
   }
 
   if (isAuthenticating) {
