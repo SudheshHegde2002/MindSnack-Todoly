@@ -38,6 +38,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     fontSize: 16,
+    color: '#1A1A1A',
   },
   inputPassword: {
     borderWidth: 1,
@@ -47,6 +48,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     fontSize: 16,
+    color: '#1A1A1A',
   },
   primaryButton: {
     backgroundColor: '#6366F1',

@@ -123,6 +123,36 @@ export default function MainLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+       name="_styles/addTodoModalStyles"
+       options={{
+        href: null,
+       }}
+      />
+      <Tabs.Screen
+       name="_styles/todoStyles"
+       options={{
+        href: null,
+       }}
+      />
+      <Tabs.Screen
+       name="_styles/settingsModalStyles"
+       options={{
+        href: null,
+       }}
+      />
+      <Tabs.Screen
+       name="_styles/todoItemStyles"
+       options={{
+        href: null,
+       }}
+       />
+      <Tabs.Screen
+       name="_styles/homeScreenStyles"
+       options={{
+        href: null,
+       }}
+      />
     </Tabs>
   );
 }
