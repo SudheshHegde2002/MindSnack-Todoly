@@ -295,14 +295,6 @@ export default function AllTasksScreen() {
         <View style={styles.emptyContainer}>
           {statusFilter === 'completed'?(<Text style={styles.emptyTitle}>No Completed Tasks Yet</Text>):(<Text style={styles.emptyTitle}>No Tasks Yet in this group</Text>)}
           {statusFilter === 'completed'?(<Text style={styles.emptySubtitle}>Complete tasks to see them here</Text>):(<Text style={styles.emptySubtitle}>Add a task to get started</Text>)}
-          {statusFilter !== 'completed' && (
-            <TouchableOpacity
-              style={styles.fab}
-              onPress={() => setModalVisible(true)}
-            >
-              <MaterialIcons name="add" size={32} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
         </View>
       ) : (
         <SectionList
@@ -326,18 +318,25 @@ export default function AllTasksScreen() {
               <Text style={styles.sectionHeaderText}>{title}</Text>
             </View>
           )}
-          contentContainerStyle={{ paddingBottom: 8, paddingHorizontal: 12 }}
+          contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 12 }}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
         />
       )}
 
-      {/* New Task modal - preselect current group filter if any */}
+      {/* Always show Add Todo FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}
+      >
+        <MaterialIcons name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* New Task modal - always show full modal without pre-selection */}
       <AddTodoModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onAdd={addTodo}
-        initialGroupId={selectedGroupId !== 'all' ? selectedGroupId : undefined}
       />
 
       <OfflineIndicator />
