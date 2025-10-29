@@ -5,7 +5,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
-import SettingsModal from './components/SettingsModal';
 import AddGroupModal from './components/AddGroupModal';
 import { useGroups } from '../../hooks/useGroups';
 import { LocalGroup } from '../../services/database';
@@ -14,7 +13,6 @@ export default function HomeScreen() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
-  const [settingsVisible, setSettingsVisible] = useState(false);
   const [addGroupVisible, setAddGroupVisible] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
@@ -112,11 +110,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </Animated.View>
             </>
-          ) : (
-            <TouchableOpacity onPress={() => setSettingsVisible(true)}>
-              <MaterialIcons name="settings" size={24} color="#6366F1" />
-            </TouchableOpacity>
-          )}
+          ) : null}
         </View>
       ),
     });
@@ -219,11 +213,6 @@ export default function HomeScreen() {
       <AddGroupModal
         visible={addGroupVisible}
         onClose={() => setAddGroupVisible(false)}
-      />
-
-      <SettingsModal
-        visible={settingsVisible}
-        onClose={() => setSettingsVisible(false)}
       />
     </View>
   );

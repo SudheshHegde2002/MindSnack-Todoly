@@ -144,19 +144,21 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
               autoFocus
             />
 
-            <Text style={styles.label}>Description (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter task description"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+               <Text style={styles.label}>Description (Optional)</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Enter task description"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
 
-            <Text style={styles.label}>Group</Text>
-            <View style={styles.groupContainer}>
+              {!initialGroupId && (
+                <>
+                  <Text style={styles.label}>Group</Text>
+                  <View style={styles.groupContainer}>
               {uniqueGroups.map((group) => (
                 <TouchableOpacity
                   key={group.id}
@@ -237,6 +239,8 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
                 </View>
               </View>
             )}
+                </>
+              )}
           </ScrollView>
 
           {!isCreatingGroup && (

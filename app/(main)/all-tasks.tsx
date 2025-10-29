@@ -6,14 +6,12 @@ import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 're
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import TodoItem from './components/TodoItem';
-import SettingsModal from './components/SettingsModal';
 import { useTodos } from '../../hooks/useTodos';
 import { useGroups } from '../../hooks/useGroups';
 
 export default function AllTasksScreen() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigation = useNavigation();
-  const [settingsVisible, setSettingsVisible] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
   const { todos, isLoading, toggleComplete, deleteTodo, deleteTodos } = useTodos();
@@ -136,11 +134,7 @@ export default function AllTasksScreen() {
                 </TouchableOpacity>
               </Animated.View>
             </>
-          ) : (
-            <TouchableOpacity onPress={() => setSettingsVisible(true)}>
-              <MaterialIcons name="settings" size={24} color="#6366F1" />
-            </TouchableOpacity>
-          )}
+          ) : null}
         </View>
       ),
     });
@@ -191,11 +185,6 @@ export default function AllTasksScreen() {
           stickySectionHeadersEnabled={false}
         />
       )}
-
-      <SettingsModal
-        visible={settingsVisible}
-        onClose={() => setSettingsVisible(false)}
-      />
     </View>
   );
 }
