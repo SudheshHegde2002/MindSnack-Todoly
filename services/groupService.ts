@@ -156,6 +156,39 @@ class GroupService {
     // Check if this is a temp ID (never synced to Supabase)
     const isTempId = id.startsWith('temp_group_');
 
+    // IMPORTANT: Delete all todos associated with this group first
+    const todosToDelete = localDb.getTodosByGroupId(id);
+    console.log(`Deleting ${todosToDelete.length} todos associated with group ${id}`);
+    
+    for (const todo of todosToDelete) {
+      // Delete from local database
+      localDb.deleteTodo(todo.id);
+      localDb.markAsDeleted(todo.id, userId);
+      
+      // If the todo has a real ID (not temp), we need to queue it for deletion or delete from Supabase
+      if (!todo.id.startsWith('temp_')) {
+        if (this.isOnline) {
+          try {
+            const { error } = await supabase.from('TodoTable').delete().eq('id', todo.id);
+            if (error) {
+              console.error('Failed to delete todo from Supabase, queuing:', error);
+              localDb.addToQueue('delete', todo.id, todo);
+            }
+          } catch (error) {
+            console.error('Failed to delete todo, queuing:', error);
+            localDb.addToQueue('delete', todo.id, todo);
+          }
+        } else {
+          // Offline: queue for later deletion
+          localDb.addToQueue('delete', todo.id, todo);
+        }
+      } else {
+        // If it's a temp ID, just remove any pending operations from queue
+        localDb.removeFromQueueByTodoId(todo.id);
+      }
+    }
+
+    // Now delete the group itself
     localDb.deleteGroup(id);
     localDb.markGroupAsDeleted(id, userId);
 

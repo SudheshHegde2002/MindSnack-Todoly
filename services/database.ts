@@ -127,6 +127,13 @@ export const localDb = {
     return result || null;
   },
 
+  getTodosByGroupId: (groupId: string): LocalTodo[] => {
+    return db.getAllSync<LocalTodo>(
+      'SELECT * FROM todos WHERE group_id = ?',
+      [groupId]
+    );
+  },
+
   insertTodo: (todo: Omit<LocalTodo, 'synced'>) => {
     db.runSync(
       `INSERT INTO todos (id, user_id, title, description, group_id, is_completed, created_at, updated_at, synced)
