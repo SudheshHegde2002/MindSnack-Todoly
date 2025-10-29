@@ -28,6 +28,7 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [pendingGroupSelection, setPendingGroupSelection] = useState<string | null>(null);
 
   // Filter to get unique groups by name, keeping the first occurrence
   const uniqueGroups = React.useMemo(() => {
@@ -46,6 +47,18 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
       setSelectedGroupId(uniqueGroups[0].id);
     }
   }, [visible, uniqueGroups, selectedGroupId]);
+
+  // Auto-select newly created group when it appears in the list
+  React.useEffect(() => {
+    if (pendingGroupSelection) {
+      const newGroup = uniqueGroups.find(g => g.name === pendingGroupSelection);
+      if (newGroup) {
+        console.log('Auto-selecting new group:', newGroup.id, newGroup.name);
+        setSelectedGroupId(newGroup.id);
+        setPendingGroupSelection(null);
+      }
+    }
+  }, [uniqueGroups, pendingGroupSelection]);
 
   const handleAdd = () => {
     if (title.trim() && selectedGroupId) {
@@ -81,17 +94,11 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
     // Dismiss keyboard
     Keyboard.dismiss();
     
+    // Set pending selection - this will be picked up by the useEffect when the group appears
+    setPendingGroupSelection(groupName);
+    
     // Add the group
     await addGroup(groupName);
-    
-    // Wait for groups to update and select the new group
-    setTimeout(() => {
-      const newGroup = groups.find(g => g.name === groupName);
-      if (newGroup) {
-        setSelectedGroupId(newGroup.id);
-        console.log('Auto-selected new group:', newGroup.id, groupName);
-      }
-    }, 300);
     
     setNewGroupName('');
     setIsCreatingGroup(false);
