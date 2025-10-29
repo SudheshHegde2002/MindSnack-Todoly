@@ -3,7 +3,7 @@ import { Modal, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
-import { styles } from '../styles/settingsModalStyles';
+import { styles } from '../_styles/settingsModalStyles';
 
 type SettingsModalProps = {
   visible: boolean;

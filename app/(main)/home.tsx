@@ -1,7 +1,7 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Redirect, useRouter } from 'expo-router';
 import { View, Text, Button, ActivityIndicator } from 'react-native';
-import { styles } from './styles/homeStyles';
+import { styles } from './_styles/homeStyles';
 
 export default function HomeScreen() {
     const { isSignedIn, signOut, isLoaded } = useAuth();
@@ -20,5 +20,5 @@ export default function HomeScreen() {
         return <Redirect href="/(auth)/welcome" />;
     }
 
-    return <Redirect href="/(main)/" />;
+    return <Redirect href="/(main)" />;
 }

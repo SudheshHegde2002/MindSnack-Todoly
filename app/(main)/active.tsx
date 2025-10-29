@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, SectionList,
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { styles } from './styles/todoStyles';
+import { styles } from './_styles/todoStyles';
 import AddTodoModal from './components/AddTodoModal';
 import SettingsModal from './components/SettingsModal';
 import TodoItem from './components/TodoItem';

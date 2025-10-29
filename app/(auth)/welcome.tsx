@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth } from '@clerk/clerk-expo';
 import React from 'react';
-import { styles } from './styles/welcomeStyles';
+import { styles } from './_styles/welcomeStyles';
 import { makeRedirectUri } from 'expo-auth-session';
 WebBrowser.maybeCompleteAuthSession();
 
@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
         // Explicitly navigate to home after successful auth
-        router.replace('/(main)/');
+        router.replace('/(main)');
       } else {
         // If OAuth didn't complete, reset the state
         setIsAuthenticating(false);
@@ -34,7 +34,7 @@ export default function WelcomeScreen() {
   }, [router, startOAuthFlow]);
 
   if (isLoaded && isSignedIn) {
-    return <Redirect href="/(main)/" />;
+    return <Redirect href="/(main)" />;
   }
 
   if (isAuthenticating) {

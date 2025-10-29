@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Animated, Al
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { styles } from './styles/todoStyles';
+import { styles } from './_styles/todoStyles';
 import AddGroupModal from './components/AddGroupModal';
 import OfflineIndicator from './components/OfflineIndicator';
 import { useGroups } from '../../hooks/useGroups';

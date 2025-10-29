@@ -2,8 +2,8 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Redirect, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { styles } from './styles/todoStyles';
-import { styles as settingsStyles } from './styles/settingsModalStyles';
+import { styles } from './_styles/todoStyles';
+import { styles as settingsStyles } from './_styles/settingsModalStyles';
 import OfflineIndicator from './components/OfflineIndicator';
 
 export default function ProfileScreen() {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { styles } from '../styles/signUpStyles';
+import { styles } from '../_styles/signUpStyles';
 
 type Props = {
     emailAddress: string;

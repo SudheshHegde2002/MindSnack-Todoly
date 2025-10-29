@@ -12,7 +12,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { styles } from '../styles/addTodoModalStyles';
+import { styles } from '../_styles/addTodoModalStyles';
 import { useGroups } from '../../../hooks/useGroups';
 
 type AddTodoModalProps = {

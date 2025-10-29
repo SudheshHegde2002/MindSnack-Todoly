@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, SectionList, Animated,
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { styles } from './styles/todoStyles';
+import { styles } from './_styles/todoStyles';
 import TodoItem from './components/TodoItem';
 import OfflineIndicator from './components/OfflineIndicator';
 import { useTodos } from '../../hooks/useTodos';

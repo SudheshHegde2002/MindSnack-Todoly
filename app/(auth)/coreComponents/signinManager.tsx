@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
-import { styles } from '../styles/signInStyles';
+import { styles } from '../_styles/signInStyles';
 
 type Props = {
     emailAddress: string;

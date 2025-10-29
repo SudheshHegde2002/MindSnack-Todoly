@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Alert, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { styles } from '../styles/todoItemStyles';
+import { styles } from '../_styles/todoItemStyles';
 import { LocalTodo } from '../../../services/database';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
