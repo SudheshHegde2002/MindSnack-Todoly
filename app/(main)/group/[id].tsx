@@ -8,7 +8,7 @@ import { styles } from '../styles/todoStyles';
 import AddTodoModal from '../components/AddTodoModal';
 import RenameGroupModal from '../components/RenameGroupModal';
 import TodoItem from '../components/TodoItem';
-import OfflineIndicator, { useIsOffline } from '../components/OfflineIndicator';
+import OfflineIndicator from '../components/OfflineIndicator';
 import { useTodos } from '../../../hooks/useTodos';
 import { useGroups } from '../../../hooks/useGroups';
 
@@ -23,7 +23,6 @@ export default function GroupDetailScreen() {
   const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
   const { todos, isLoading, addTodo, toggleComplete, deleteTodo, deleteTodos } = useTodos();
   const { groups, renameGroup } = useGroups();
-  const isOffline = useIsOffline();
   
   const headerButtonScale = useRef(new Animated.Value(1)).current;
 
@@ -239,10 +238,7 @@ export default function GroupDetailScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={[
-          styles.fab,
-          isOffline && { bottom: 105 } // Push up when offline (69 + 36)
-        ]} 
+        style={styles.fab}
         onPress={() => setModalVisible(true)}
       >
         <MaterialIcons name="add" size={32} color="#FFFFFF" />
