@@ -24,10 +24,10 @@ class TodoService {
 
   async addTodo(userId: string, title: string, description: string | null): Promise<LocalTodo> {
     const now = new Date().toISOString();
-    const id = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const todo: Omit<LocalTodo, 'synced'> = {
-      id,
+      id: tempId,
       user_id: userId,
       title,
       description,
@@ -37,7 +37,8 @@ class TodoService {
     };
 
     localDb.insertTodo(todo);
-    console.log('Todo added to SQLite:', todo);
+    console.log('Todo added to SQLite with temp ID:', todo);
+    
     if (this.isOnline) {
       try {
         console.log('Attempting to insert into Supabase:', {
@@ -56,17 +57,29 @@ class TodoService {
 
         if (error) {
           console.error('Supabase insert error:', JSON.stringify(error, null, 2));
-          localDb.addToQueue('add', id, todo);
-        } else {
+          localDb.addToQueue('add', tempId, todo);
+        } else if (data && data[0]) {
           console.log('Supabase insert success:', data);
-          localDb.markAsSynced(id);
+          const supabaseId = data[0].id;
+          
+          // Update local database with Supabase ID
+          localDb.deleteTodo(tempId);
+          localDb.insertTodo({
+            ...todo,
+            id: supabaseId,
+            created_at: data[0].created_at,
+            updated_at: data[0].updated_at || data[0].created_at,
+          });
+          localDb.markAsSynced(supabaseId);
+          
+          return { ...todo, id: supabaseId, synced: 1 };
         }
       } catch (error) {
         console.error('Failed to sync add (catch):', error);
-        localDb.addToQueue('add', id, todo);
+        localDb.addToQueue('add', tempId, todo);
       }
     } else {
-      localDb.addToQueue('add', id, todo);
+      localDb.addToQueue('add', tempId, todo);
     }
 
     return { ...todo, synced: 0 };
@@ -78,7 +91,7 @@ class TodoService {
 
     const newCompleted = todo.is_completed === 1 ? 0 : 1;
     localDb.updateTodo(id, { is_completed: newCompleted });
-
+    console.log('Todo updated in SQLite:', { id, is_completed: newCompleted });
     if (this.isOnline) {
       try {
         const { error } = await supabase
@@ -188,33 +201,60 @@ class TodoService {
 
           switch (item.action) {
             case 'add':
-              const { error: addError } = await supabase.from('TodoTable').insert({
+              const { data: insertData, error: addError } = await supabase.from('TodoTable').insert({
                 user_id: data.user_id,
                 title: data.title,
                 description: data.description,
                 is_completed: data.is_completed === 1,
-              });
+              }).select();
               
               if (addError) {
                 console.error('Queue sync add error:', addError);
                 throw addError;
               }
-              localDb.markAsSynced(item.todo_id);
+              
+              if (insertData && insertData[0]) {
+                const supabaseId = insertData[0].id;
+                
+                // Update local database with Supabase ID
+                localDb.deleteTodo(item.todo_id);
+                localDb.insertTodo({
+                  id: supabaseId,
+                  user_id: data.user_id,
+                  title: data.title,
+                  description: data.description,
+                  is_completed: data.is_completed,
+                  created_at: insertData[0].created_at,
+                  updated_at: insertData[0].updated_at || insertData[0].created_at,
+                });
+                localDb.markAsSynced(supabaseId);
+              }
               break;
 
             case 'update':
-              await supabase
+              const { error: updateError } = await supabase
                 .from('TodoTable')
                 .update({
                   is_completed: data.is_completed === 1,
                   updated_at: new Date().toISOString(),
                 })
                 .eq('id', item.todo_id);
-              localDb.markAsSynced(item.todo_id);
+                
+              if (!updateError) {
+                localDb.markAsSynced(item.todo_id);
+              } else {
+                console.error('Queue sync update error:', updateError);
+                throw updateError;
+              }
               break;
 
             case 'delete':
-              await supabase.from('TodoTable').delete().eq('id', item.todo_id);
+              const { error: deleteError } = await supabase.from('TodoTable').delete().eq('id', item.todo_id);
+              
+              if (deleteError) {
+                console.error('Queue sync delete error:', deleteError);
+                throw deleteError;
+              }
               break;
           }
 
