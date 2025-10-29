@@ -10,6 +10,16 @@ class TodoService {
     this.initNetworkListener();
   }
 
+  setupGroupSyncListener() {
+    // When groups are synced, sync todos too (in case they now have real group IDs)
+    // This is called after both services are initialized to avoid circular dependency
+    const { groupService } = require('./groupService');
+    groupService.onGroupsSynced(() => {
+      console.log('Group sync detected, triggering todo sync...');
+      this.syncWithSupabase();
+    });
+  }
+
   private initNetworkListener() {
     NetInfo.addEventListener(state => {
       const wasOffline = !this.isOnline;
@@ -22,7 +32,7 @@ class TodoService {
     });
   }
 
-  async addTodo(userId: string, title: string, description: string | null): Promise<LocalTodo> {
+  async addTodo(userId: string, title: string, description: string | null, groupId: string): Promise<LocalTodo> {
     const now = new Date().toISOString();
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -31,6 +41,7 @@ class TodoService {
       user_id: userId,
       title,
       description,
+      group_id: groupId,
       is_completed: 0,
       created_at: now,
       updated_at: now,
@@ -45,6 +56,7 @@ class TodoService {
           user_id: todo.user_id,
           title: todo.title,
           description: todo.description,
+          group_id: todo.group_id,
           is_completed: false,
         });
 
@@ -52,6 +64,7 @@ class TodoService {
           user_id: todo.user_id,
           title: todo.title,
           description: todo.description,
+          group_id: parseInt(todo.group_id),
           is_completed: false,
         }).select();
 
@@ -67,6 +80,7 @@ class TodoService {
           localDb.insertTodo({
             ...todo,
             id: supabaseId,
+            group_id: data[0].group_id,
             created_at: data[0].created_at,
             updated_at: data[0].updated_at || data[0].created_at,
           });
@@ -196,6 +210,7 @@ class TodoService {
               user_id: todo.user_id,
               title: todo.title,
               description: todo.description,
+              group_id: todo.group_id,
               is_completed: todo.is_completed ? 1 : 0,
               created_at: todo.created_at,
               updated_at: todo.updated_at || todo.created_at,
@@ -209,6 +224,7 @@ class TodoService {
               localDb.updateTodo(todo.id, {
                 title: todo.title,
                 description: todo.description,
+                group_id: todo.group_id,
                 is_completed: todo.is_completed ? 1 : 0,
                 updated_at: todo.updated_at || todo.created_at,
               });
@@ -255,6 +271,7 @@ class TodoService {
             user_id: data.user_id,
             title: data.title,
             description: data.description,
+            group_id: parseInt(data.group_id),
             is_completed: data.is_completed === 1,
           }).select();
           
@@ -274,6 +291,7 @@ class TodoService {
               user_id: data.user_id,
               title: data.title,
               description: data.description,
+              group_id: insertData[0].group_id,
               is_completed: data.is_completed,
               created_at: insertData[0].created_at,
               updated_at: insertData[0].updated_at || insertData[0].created_at,
@@ -381,4 +399,7 @@ class TodoService {
 }
 
 export const todoService = new TodoService();
+
+// Setup group sync listener after both services are created
+todoService.setupGroupSyncListener();
 

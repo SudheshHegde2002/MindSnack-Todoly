@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-expo';
 import { todoService } from '../services/todoService';
-import { LocalTodo } from '../services/database';
+import { groupService } from '../services/groupService';
+import { LocalTodo, localDb } from '../services/database';
 
 export function useTodos() {
   const { user } = useUser();
@@ -33,9 +34,21 @@ export function useTodos() {
   }, [user?.id, loadTodos]);
 
   const addTodo = useCallback(
-    async (title: string, description: string) => {
+    async (title: string, description: string, groupId: string) => {
       if (!user?.id) return;
-      await todoService.addTodo(user.id, title, description || null);
+      
+      // If group has a temp ID, get the group name and ensure it exists in Supabase first
+      if (groupId.startsWith('temp_group_')) {
+        const group = localDb.getGroupById(groupId);
+        if (group) {
+          console.log('Group has temp ID, ensuring it exists in Supabase first:', group.name);
+          const syncedGroup = await groupService.ensureGroup(user.id, group.name);
+          groupId = syncedGroup.id;
+          console.log('Using synced group ID:', groupId);
+        }
+      }
+      
+      await todoService.addTodo(user.id, title, description || null, groupId);
       loadTodos();
     },
     [user?.id, loadTodos]

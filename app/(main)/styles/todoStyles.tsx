@@ -48,5 +48,16 @@ export const styles = StyleSheet.create({
   listContainer: {
     paddingBottom: 100,
   },
+  sectionHeader: {
+    backgroundColor: '#FAFAFA',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginTop: 8,
+  },
+  sectionHeaderText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#6366F1',
+  },
 });
 
