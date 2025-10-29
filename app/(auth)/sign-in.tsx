@@ -13,24 +13,24 @@ export default function SignInScreen() {
 
     const onSignInPress = () => {
         handleSignInPress({
-            signIn,
-            setActive,
-            isLoaded,
-            emailAddress,
-            password,
-            setError,
-            onSuccess: () => router.replace('/(main)/active'),
+                signIn,
+                setActive,
+                isLoaded,
+                emailAddress,
+                password,
+                setError,
+                onSuccess: () => router.replace('/(main)/active'),
         });
     };
 //The sign in screen
-    return (
-        <SigninManager
-            emailAddress={emailAddress}
-            setEmailAddress={setEmailAddress}
-            password={password}
-            setPassword={setPassword}
-            error={error}
-            onSignInPress={onSignInPress}
-        />
-    );
+        return (
+            <SigninManager
+                emailAddress={emailAddress}
+                setEmailAddress={setEmailAddress}
+                password={password}
+                setPassword={setPassword}
+                error={error}
+                onSignInPress={onSignInPress}
+            />
+        );
 }

@@ -20,7 +20,7 @@ export default function VerificationManager({
     onVerifyPress,
 }: Props) {
     return (
-        <View style={styles.verifyContainer}>
+        <View style={[styles.verifyContainer, { justifyContent: 'flex-start', paddingTop: 85 }]}> 
             <TouchableOpacity
                 onPress={onBack}
                 style={styles.backButton}

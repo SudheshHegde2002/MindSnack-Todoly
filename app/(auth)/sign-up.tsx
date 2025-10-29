@@ -16,23 +16,23 @@ export default function SignUpScreen() {
 
   const onSignUpPress = () => {
     handleSignUpPress({
-      signUp,
-      isLoaded,
-      emailAddress,
-      password,
-      setError,
-      setPendingVerification,
+        signUp,
+        isLoaded,
+        emailAddress,
+        password,
+        setError,
+        setPendingVerification,
     });
   };
 
   const onVerifyPress = () => {
     handleVerifyPress({
-      signUp,
-      setActive,
-      isLoaded,
-      code,
-      setError,
-      onSuccess: () => router.replace('/(main)/active'),
+        signUp,
+        setActive,
+        isLoaded,
+        code,
+        setError,
+        onSuccess: () => router.replace('/(main)/active'),
     });
   };
 //Conditional rendering to check if the user is pending verification(otp screen)
@@ -49,14 +49,14 @@ export default function SignUpScreen() {
     );
   }
 //The sign up screen
-  return (
-    <SignUpManager
-      emailAddress={emailAddress}
-      setEmailAddress={setEmailAddress}
-      password={password}
-      setPassword={setPassword}
-      error={error}
-      onSignUpPress={onSignUpPress}
-    />
-  );
+    return (
+      <SignUpManager
+        emailAddress={emailAddress}
+        setEmailAddress={setEmailAddress}
+        password={password}
+        setPassword={setPassword}
+        error={error}
+        onSignUpPress={onSignUpPress}
+      />
+    );
 }

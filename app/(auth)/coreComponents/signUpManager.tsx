@@ -21,7 +21,7 @@ export default function SignUpManager({
     onSignUpPress,
 }: Props) {
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { justifyContent: 'flex-start', paddingTop: 85 }]}> 
             <Link href="/(auth)/welcome" asChild>
                 <TouchableOpacity style={styles.backButton}>
                     <Text style={styles.backButtonText}>← Back</Text>
