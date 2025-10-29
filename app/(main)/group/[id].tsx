@@ -6,6 +6,7 @@ import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 're
 import { useNavigation } from '@react-navigation/native';
 import { styles } from '../styles/todoStyles';
 import AddTodoModal from '../components/AddTodoModal';
+import RenameGroupModal from '../components/RenameGroupModal';
 import TodoItem from '../components/TodoItem';
 import { useTodos } from '../../../hooks/useTodos';
 import { useGroups } from '../../../hooks/useGroups';
@@ -16,10 +17,11 @@ export default function GroupDetailScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
   const { todos, isLoading, addTodo, toggleComplete, deleteTodo, deleteTodos } = useTodos();
-  const { groups } = useGroups();
+  const { groups, renameGroup } = useGroups();
   
   const headerButtonScale = useRef(new Animated.Value(1)).current;
 
@@ -113,6 +115,12 @@ export default function GroupDetailScreen() {
     setSelectedTodoIds(new Set());
   };
 
+  const handleRename = async (newName: string) => {
+    if (id) {
+      await renameGroup(id as string, newName);
+    }
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: currentGroup?.name || 'Group',
@@ -184,7 +192,7 @@ export default function GroupDetailScreen() {
       {groupTodos.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyTitle}>No Tasks Yet</Text>
-          <Text style={styles.emptySubtitle}>Add your first task to this group</Text>
+          <Text style={styles.emptySubtitle}>Tap the + button to add a task to this group</Text>
         </View>
       ) : (
         <SectionList
@@ -212,6 +220,19 @@ export default function GroupDetailScreen() {
         />
       )}
 
+      <TouchableOpacity 
+        style={[
+          styles.fab, 
+          { 
+            bottom: 100,
+            backgroundColor: '#F3F4F6',
+          }
+        ]} 
+        onPress={() => setRenameModalVisible(true)}
+      >
+        <MaterialIcons name="settings" size={24} color="#6366F1" />
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
         <MaterialIcons name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
@@ -221,6 +242,13 @@ export default function GroupDetailScreen() {
         onClose={() => setModalVisible(false)}
         onAdd={addTodo}
         initialGroupId={id as string}
+      />
+
+      <RenameGroupModal
+        visible={renameModalVisible}
+        onClose={() => setRenameModalVisible(false)}
+        onRename={handleRename}
+        currentName={currentGroup?.name || ''}
       />
     </View>
   );

@@ -30,6 +30,19 @@ class GroupService {
 
   async addGroup(userId: string, name: string): Promise<LocalGroup> {
     const now = new Date().toISOString();
+    
+    // Create temp ID for offline operation
+    const tempId = `temp_group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    const group: Omit<LocalGroup, 'synced'> = {
+      id: tempId,
+      user_id: userId,
+      name: name,
+      created_at: now,
+    };
+
+    // Always insert locally first
+    localDb.insertGroup(group);
 
     if (this.isOnline) {
       try {
@@ -41,35 +54,97 @@ class GroupService {
         }).select();
 
         if (error) {
-          console.error('Supabase group insert error:', JSON.stringify(error, null, 2));
-          throw error;
+          console.error('Supabase group insert error, will queue for later:', JSON.stringify(error, null, 2));
+          localDb.addGroupToQueue('add', tempId, group);
+          return { ...group, synced: 0 };
         }
 
         if (data && data[0]) {
           console.log('Supabase group insert success:', data);
           const supabaseId = data[0].id;
 
-          const group: Omit<LocalGroup, 'synced'> = {
+          // Replace temp ID with real Supabase ID
+          localDb.deleteGroup(tempId);
+          const syncedGroup: Omit<LocalGroup, 'synced'> = {
             id: supabaseId,
             user_id: userId,
             name: name,
             created_at: data[0].created_at,
           };
 
-          localDb.insertGroup(group);
+          localDb.insertGroup(syncedGroup);
           localDb.markGroupAsSynced(supabaseId);
 
-          return { ...group, synced: 1 };
+          // Update any todos that reference this temp group ID
+          this.updateTodosGroupId(tempId, supabaseId);
+
+          return { ...syncedGroup, synced: 1 };
         }
       } catch (error) {
-        console.error('Failed to create group:', error);
-        throw error;
+        console.error('Failed to create group online, queuing for sync:', error);
+        localDb.addGroupToQueue('add', tempId, group);
+        return { ...group, synced: 0 };
       }
     } else {
-      throw new Error('Cannot create groups while offline');
+      // Offline: Queue for later sync
+      console.log('Offline: Queuing group for sync');
+      localDb.addGroupToQueue('add', tempId, group);
+      return { ...group, synced: 0 };
     }
 
     throw new Error('Failed to create group');
+  }
+
+  async renameGroup(id: string, newName: string): Promise<void> {
+    const group = localDb.getGroupById(id);
+    if (!group) throw new Error('Group not found');
+
+    // Update locally first
+    const updatedGroup = { ...group, name: newName };
+    localDb.deleteGroup(id);
+    localDb.insertGroup(updatedGroup);
+
+    // Check if this is a temp ID (not yet synced)
+    const isTempId = id.startsWith('temp_group_');
+
+    if (isTempId) {
+      // If it's a temp ID, update the queued 'add' operation with the new name
+      const queue = localDb.getGroupQueue();
+      const addItem = queue.find(item => item.action === 'add' && item.group_id === id);
+      if (addItem) {
+        // Update the queue item's data with the new name
+        localDb.removeFromGroupQueue(addItem.id);
+        localDb.addGroupToQueue('add', id, updatedGroup);
+        console.log('Updated temp group name in queue, will sync with creation');
+      } else {
+        console.log('Temp group renamed locally, will sync with creation');
+      }
+      return;
+    }
+
+    if (this.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('groups')
+          .update({ name: newName })
+          .eq('id', id);
+
+        if (error) {
+          console.error('Failed to rename group in Supabase, will queue for later:', error);
+          localDb.addGroupToQueue('update', id, updatedGroup);
+        } else {
+          console.log('Group renamed successfully in Supabase');
+          localDb.markGroupAsSynced(id);
+        }
+      } catch (error) {
+        console.error('Error renaming group, queuing for sync:', error);
+        localDb.addGroupToQueue('update', id, updatedGroup);
+      }
+    } else {
+      // Offline: Queue for later sync
+      console.log('Offline: Queuing group rename for sync');
+      localDb.addGroupToQueue('update', id, updatedGroup);
+    }
   }
 
   async deleteGroup(id: string): Promise<void> {
@@ -220,7 +295,38 @@ class GroupService {
         }
       }
 
-      // Pass 2: Process all 'delete' operations (now with real IDs)
+      // Pass 2: Process all 'update' operations (now with real IDs)
+      queue = localDb.getGroupQueue(); // Refresh queue to get updated IDs
+      const updateItems = queue.filter(item => item.action === 'update');
+
+      for (const item of updateItems) {
+        try {
+          // Skip if still has temp ID (add operation must have failed)
+          if (item.group_id.startsWith('temp_group_')) {
+            console.log('Skipping update for temp group ID (add operation not completed):', item.group_id);
+            continue;
+          }
+
+          const data = JSON.parse(item.data);
+
+          const { error: updateError } = await supabase
+            .from('groups')
+            .update({ name: data.name })
+            .eq('id', item.group_id);
+
+          if (!updateError) {
+            console.log('Successfully synced group update for:', item.group_id);
+            localDb.markGroupAsSynced(item.group_id);
+            localDb.removeFromGroupQueue(item.id);
+          } else {
+            console.error('Queue sync group update error:', updateError);
+          }
+        } catch (error) {
+          console.error(`Failed to sync group update item ${item.id}:`, error);
+        }
+      }
+
+      // Pass 3: Process all 'delete' operations (now with real IDs)
       queue = localDb.getGroupQueue(); // Refresh queue to get updated IDs
       const deleteItems = queue.filter(item => item.action === 'delete');
 

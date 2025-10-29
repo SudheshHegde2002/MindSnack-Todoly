@@ -32,7 +32,7 @@ export type QueueItem = {
 
 export type GroupQueueItem = {
   id: number;
-  action: 'add' | 'delete';
+  action: 'add' | 'update' | 'delete';
   group_id: string;
   data: string;
   timestamp: string;
@@ -246,7 +246,7 @@ export const localDb = {
     db.runSync('UPDATE groups SET synced = 1 WHERE id = ?', [id]);
   },
 
-  addGroupToQueue: (action: 'add' | 'delete', groupId: string, data: any) => {
+  addGroupToQueue: (action: 'add' | 'update' | 'delete', groupId: string, data: any) => {
     db.runSync(
       'INSERT INTO group_sync_queue (action, group_id, data, timestamp) VALUES (?, ?, ?, ?)',
       [action, groupId, JSON.stringify(data), new Date().toISOString()]

@@ -50,11 +50,20 @@ export function useGroups() {
     [loadGroups]
   );
 
+  const renameGroup = useCallback(
+    async (id: string, newName: string) => {
+      await groupService.renameGroup(id, newName);
+      loadGroups();
+    },
+    [loadGroups]
+  );
+
   return {
     groups,
     isLoading,
     addGroup,
     deleteGroup,
+    renameGroup,
   };
 }
 
