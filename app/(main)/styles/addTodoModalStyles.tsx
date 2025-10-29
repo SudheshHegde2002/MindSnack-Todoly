@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '80%',
+    maxHeight: '95%',
     paddingBottom: 24,
   },
   modalHeader: {
@@ -29,6 +29,7 @@ export const styles = StyleSheet.create({
   },
   modalBody: {
     padding: 20,
+    paddingBottom: 20,
   },
   label: {
     fontSize: 14,

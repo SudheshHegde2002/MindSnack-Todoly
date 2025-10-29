@@ -147,59 +147,74 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
                   style={styles.groupChip}
                   onPress={() => setIsCreatingGroup(true)}
                 >
-                  <MaterialIcons name="add" size={16} color="#6B7280" />
-                  <Text style={styles.groupChipText}> New Group</Text>
+                  <MaterialIcons name="add" size={20} color="#6B7280" />
                 </TouchableOpacity>
               )}
             </View>
 
             {isCreatingGroup && (
-              <View style={{ marginTop: 8 }}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter group name"
-                  value={newGroupName}
-                  onChangeText={setNewGroupName}
-                  autoFocus
-                />
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              <View style={{ marginTop: 12, marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <TextInput
+                    style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                    placeholder="Enter group name"
+                    value={newGroupName}
+                    onChangeText={setNewGroupName}
+                    autoFocus
+                  />
                   <TouchableOpacity
-                    style={[styles.cancelButton, { flex: 1 }]}
                     onPress={() => {
                       setIsCreatingGroup(false);
                       setNewGroupName('');
                     }}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: '#FEE2E2',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
                   >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                    <MaterialIcons name="close" size={20} color="#EF4444" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.addButton,
-                      { flex: 1 },
-                      !newGroupName.trim() && styles.addButtonDisabled,
-                    ]}
                     onPress={handleCreateGroup}
                     disabled={!newGroupName.trim()}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: newGroupName.trim() ? '#D1FAE5' : '#F3F4F6',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
                   >
-                    <Text style={styles.addButtonText}>Create</Text>
+                    <MaterialIcons 
+                      name="check" 
+                      size={20} 
+                      color={newGroupName.trim() ? '#10B981' : '#9CA3AF'} 
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
             )}
           </ScrollView>
 
-          <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.addButton, (!title.trim() || !selectedGroupId) && styles.addButtonDisabled]}
-              onPress={handleAdd}
-              disabled={!title.trim() || !selectedGroupId}
-            >
-              <Text style={styles.addButtonText}>Add Task</Text>
-            </TouchableOpacity>
-          </View>
+          {!isCreatingGroup && (
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.addButton, (!title.trim() || !selectedGroupId) && styles.addButtonDisabled]}
+                onPress={handleAdd}
+                disabled={!title.trim() || !selectedGroupId}
+              >
+                <Text style={styles.addButtonText}>Add Task</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
