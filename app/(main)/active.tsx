@@ -1,8 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { Redirect } from 'expo-router';
-import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, SectionList } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, SectionList, Alert, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useState, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import AddTodoModal from './components/AddTodoModal';
@@ -16,39 +16,74 @@ export default function ActiveScreen() {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const { todos, isLoading, isOnline, addTodo, toggleComplete, deleteTodo } = useTodos();
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
+  const { todos, isLoading, isOnline, addTodo, toggleComplete, deleteTodo, deleteTodos } = useTodos();
   const { groups } = useGroups();
+  
+  const headerButtonScale = useRef(new Animated.Value(1)).current;
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-          {!isOnline && (
-            <MaterialIcons name="cloud-off" size={20} color="#EF4444" style={{ marginRight: 12 }} />
-          )}
-          <TouchableOpacity onPress={() => setSettingsVisible(true)}>
-            <MaterialIcons name="settings" size={24} color="#6366F1" />
-          </TouchableOpacity>
-        </View>
-      ),
+  useEffect(() => {
+    Animated.spring(headerButtonScale, {
+      toValue: selectionMode ? 1.1 : 1,
+      useNativeDriver: true,
+      tension: 150,
+      friction: 7,
+    }).start();
+  }, [selectionMode]);
+
+  const handleLongPress = (id: string) => {
+    setSelectionMode(true);
+    setSelectedTodoIds(new Set([id]));
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedTodoIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      if (newSet.size === 0) {
+        setSelectionMode(false);
+      }
+      return newSet;
     });
-  }, [navigation, isOnline]);
+  };
 
-  if (!isLoaded || isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-      </View>
+  const handleBulkDelete = () => {
+    if (selectedTodoIds.size === 0) return;
+
+    Alert.alert(
+      'Delete Todos',
+      `Are you sure you want to delete ${selectedTodoIds.size} todo${selectedTodoIds.size > 1 ? 's' : ''}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteTodos(Array.from(selectedTodoIds));
+            setSelectedTodoIds(new Set());
+            setSelectionMode(false);
+          },
+        },
+      ]
     );
-  }
+  };
 
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/welcome" />;
-  }
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedTodoIds(new Set());
+  };
 
   const activeTodos = todos.filter((todo) => todo.is_completed === 0);
 
-  // Group todos by group_id
+  // Group todos by group_id - MUST be before early returns to follow Rules of Hooks
   const groupedTodos = useMemo(() => {
     const sections: { title: string; data: typeof todos }[] = [];
     
@@ -76,6 +111,59 @@ export default function ActiveScreen() {
     return sections;
   }, [activeTodos, groups]);
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+          {!isOnline && (
+            <MaterialIcons name="cloud-off" size={20} color="#EF4444" style={{ marginRight: 12 }} />
+          )}
+          {selectionMode ? (
+            <>
+              <View style={{ 
+                backgroundColor: '#EEF2FF', 
+                paddingHorizontal: 12, 
+                paddingVertical: 6, 
+                borderRadius: 12, 
+                marginRight: 12 
+              }}>
+                <Text style={{ color: '#6366F1', fontWeight: '600', fontSize: 14 }}>
+                  {selectedTodoIds.size} selected
+                </Text>
+              </View>
+              <Animated.View style={{ transform: [{ scale: headerButtonScale }], marginRight: 16 }}>
+                <TouchableOpacity onPress={handleCancelSelection}>
+                  <MaterialIcons name="close" size={24} color="#6366F1" />
+                </TouchableOpacity>
+              </Animated.View>
+              <Animated.View style={{ transform: [{ scale: headerButtonScale }] }}>
+                <TouchableOpacity onPress={handleBulkDelete}>
+                  <MaterialIcons name="delete" size={24} color="#EF4444" />
+                </TouchableOpacity>
+              </Animated.View>
+            </>
+          ) : (
+            <TouchableOpacity onPress={() => setSettingsVisible(true)}>
+              <MaterialIcons name="settings" size={24} color="#6366F1" />
+            </TouchableOpacity>
+          )}
+        </View>
+      ),
+    });
+  }, [navigation, isOnline, selectionMode, selectedTodoIds, headerButtonScale]);
+
+  if (!isLoaded || isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)/welcome" />;
+  }
+
   return (
     <View style={styles.container}>
       {activeTodos.length === 0 ? (
@@ -92,6 +180,10 @@ export default function ActiveScreen() {
               todo={item}
               onToggleComplete={toggleComplete}
               onDelete={deleteTodo}
+              selectionMode={selectionMode}
+              isSelected={selectedTodoIds.has(item.id)}
+              onSelect={handleSelect}
+              onLongPress={handleLongPress}
             />
           )}
           renderSectionHeader={({ section: { title } }) => (

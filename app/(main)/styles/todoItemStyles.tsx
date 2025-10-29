@@ -8,11 +8,15 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+  },
+  containerSelectionMode: {
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  containerSelected: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#6366F1',
+    borderWidth: 2,
   },
   checkboxContainer: {
     marginRight: 12,

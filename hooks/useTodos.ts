@@ -70,6 +70,14 @@ export function useTodos() {
     [loadTodos]
   );
 
+  const deleteTodos = useCallback(
+    async (ids: string[]) => {
+      await Promise.all(ids.map(id => todoService.deleteTodo(id)));
+      loadTodos();
+    },
+    [loadTodos]
+  );
+
   return {
     todos,
     isLoading,
@@ -77,6 +85,7 @@ export function useTodos() {
     addTodo,
     toggleComplete,
     deleteTodo,
+    deleteTodos,
   };
 }
 
