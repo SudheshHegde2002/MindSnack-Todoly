@@ -19,9 +19,10 @@ type AddTodoModalProps = {
   visible: boolean;
   onClose: () => void;
   onAdd: (title: string, description: string, groupId: string) => void;
+  initialGroupId?: string;
 };
 
-export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalProps) {
+export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }: AddTodoModalProps) {
   const { groups, addGroup } = useGroups();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -43,10 +44,15 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
 
   // Set default selected group when modal opens
   React.useEffect(() => {
-    if (visible && uniqueGroups.length > 0 && !selectedGroupId) {
-      setSelectedGroupId(uniqueGroups[0].id);
+    if (visible && uniqueGroups.length > 0) {
+      // Use initialGroupId if provided, otherwise use the first group
+      if (initialGroupId && uniqueGroups.find(g => g.id === initialGroupId)) {
+        setSelectedGroupId(initialGroupId);
+      } else if (!selectedGroupId) {
+        setSelectedGroupId(uniqueGroups[0].id);
+      }
     }
-  }, [visible, uniqueGroups, selectedGroupId]);
+  }, [visible, uniqueGroups, initialGroupId]);
 
   // Auto-select newly created group when it appears in the list
   React.useEffect(() => {

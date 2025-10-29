@@ -339,17 +339,10 @@ class GroupService {
     return newGroup;
   }
 
-  // Utility method to ensure default groups exist
+  // Utility method to ensure default groups exist (removed - no default groups)
   async ensureDefaultGroups(userId: string): Promise<void> {
-    const defaultGroups = ['Personal', 'Work'];
-
-    for (const groupName of defaultGroups) {
-      try {
-        await this.ensureGroup(userId, groupName);
-      } catch (error) {
-        console.error(`Failed to ensure group ${groupName}:`, error);
-      }
-    }
+    // No default groups - users create their own
+    console.log('No default groups to create for user:', userId);
   }
 
   // Helper method to update todos when group gets a real ID
