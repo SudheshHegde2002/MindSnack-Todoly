@@ -33,7 +33,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Todoly',
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="home" size={size} color={color} />
           ),

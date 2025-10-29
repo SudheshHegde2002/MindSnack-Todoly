@@ -50,9 +50,9 @@ export const styles = StyleSheet.create({
   },
   sectionHeader: {
     backgroundColor: '#FAFAFA',
-    paddingVertical: 12,
+    paddingVertical: 6,
     paddingHorizontal: 4,
-    marginTop: 8,
+    marginTop: 4,
   },
   sectionHeaderText: {
     fontSize: 18,
