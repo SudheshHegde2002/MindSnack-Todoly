@@ -6,6 +6,7 @@ import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './styles/todoStyles';
 import SettingsModal from './components/SettingsModal';
+import AddGroupModal from './components/AddGroupModal';
 import { useGroups } from '../../hooks/useGroups';
 import { LocalGroup } from '../../services/database';
 
@@ -14,9 +15,10 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [addGroupVisible, setAddGroupVisible] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
-  const { groups, isLoading, addGroup, deleteGroup } = useGroups();
+  const { groups, isLoading, deleteGroup } = useGroups();
   
   const headerButtonScale = useRef(new Animated.Value(1)).current;
 
@@ -79,22 +81,7 @@ export default function HomeScreen() {
   };
 
   const handleCreateGroup = () => {
-    Alert.prompt(
-      'Create Group',
-      'Enter a name for your group',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Create',
-          onPress: async (text) => {
-            if (text && text.trim()) {
-              await addGroup(text.trim());
-            }
-          },
-        },
-      ],
-      'plain-text'
-    );
+    setAddGroupVisible(true);
   };
 
   useLayoutEffect(() => {
@@ -228,6 +215,11 @@ export default function HomeScreen() {
       <TouchableOpacity style={styles.fab} onPress={handleCreateGroup}>
         <MaterialIcons name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
+
+      <AddGroupModal
+        visible={addGroupVisible}
+        onClose={() => setAddGroupVisible(false)}
+      />
 
       <SettingsModal
         visible={settingsVisible}

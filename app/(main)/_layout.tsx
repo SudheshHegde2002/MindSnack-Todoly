@@ -105,6 +105,12 @@ export default function MainLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="components/AddGroupModal"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
