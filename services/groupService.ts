@@ -289,8 +289,17 @@ class GroupService {
         if (existingData && !selectError) {
           console.log('Group exists in Supabase, syncing to local:', existingData.id);
           
+          // Check if this exact group ID already exists locally
+          const groupWithSameId = localDb.getGroupById(existingData.id);
+          
+          if (groupWithSameId) {
+            // Group already exists with this ID, just return it
+            console.log('Group with same ID already exists locally:', existingData.id);
+            return { ...groupWithSameId, synced: 1 };
+          }
+          
           // Delete temp group if exists
-          if (existing) {
+          if (existing && existing.id.startsWith('temp_group_')) {
             localDb.deleteGroup(existing.id);
           }
           
@@ -305,7 +314,7 @@ class GroupService {
           localDb.markGroupAsSynced(existingData.id);
           
           // Update todos that referenced the temp group
-          if (existing) {
+          if (existing && existing.id.startsWith('temp_group_')) {
             localDb.updateTodosGroupId(existing.id, existingData.id);
           }
           

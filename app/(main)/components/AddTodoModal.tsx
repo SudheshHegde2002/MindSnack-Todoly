@@ -28,19 +28,30 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
 
+  // Filter to get unique groups by name, keeping the first occurrence
+  const uniqueGroups = React.useMemo(() => {
+    const seen = new Map<string, typeof groups[0]>();
+    groups.forEach(group => {
+      if (!seen.has(group.name)) {
+        seen.set(group.name, group);
+      }
+    });
+    return Array.from(seen.values());
+  }, [groups]);
+
   // Set default selected group when modal opens
   React.useEffect(() => {
-    if (visible && groups.length > 0 && !selectedGroupId) {
-      setSelectedGroupId(groups[0].id);
+    if (visible && uniqueGroups.length > 0 && !selectedGroupId) {
+      setSelectedGroupId(uniqueGroups[0].id);
     }
-  }, [visible, groups, selectedGroupId]);
+  }, [visible, uniqueGroups, selectedGroupId]);
 
   const handleAdd = () => {
     if (title.trim() && selectedGroupId) {
       onAdd(title.trim(), description.trim(), selectedGroupId);
       setTitle('');
       setDescription('');
-      setSelectedGroupId(groups[0]?.id || '');
+      setSelectedGroupId(uniqueGroups[0]?.id || '');
       onClose();
     }
   };
@@ -48,7 +59,7 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
   const handleCancel = () => {
     setTitle('');
     setDescription('');
-    setSelectedGroupId(groups[0]?.id || '');
+    setSelectedGroupId(uniqueGroups[0]?.id || '');
     setIsCreatingGroup(false);
     setNewGroupName('');
     onClose();
@@ -56,6 +67,12 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
 
   const handleCreateGroup = () => {
     if (newGroupName.trim()) {
+      // Check if group with this name already exists
+      const existingGroup = uniqueGroups.find(g => g.name.toLowerCase() === newGroupName.trim().toLowerCase());
+      if (existingGroup) {
+        Alert.alert('Group Exists', `A group named "${newGroupName.trim()}" already exists.`);
+        return;
+      }
       addGroup(newGroupName.trim());
       setNewGroupName('');
       setIsCreatingGroup(false);
@@ -105,7 +122,7 @@ export default function AddTodoModal({ visible, onClose, onAdd }: AddTodoModalPr
 
             <Text style={styles.label}>Group</Text>
             <View style={styles.groupContainer}>
-              {groups.map((group) => (
+              {uniqueGroups.map((group) => (
                 <TouchableOpacity
                   key={group.id}
                   style={[
