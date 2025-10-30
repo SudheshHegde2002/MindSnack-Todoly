@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { styles } from '../_styles/settingsModalStyles';
+import { authService } from '../../../services/authService';
 
 type SettingsModalProps = {
   visible: boolean;
@@ -16,9 +17,21 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
-    onClose();
-    router.replace('/(auth)/welcome');
+    try {
+      await authService.performSignOut();
+      
+      // Try to sign out from Clerk (works only when online)
+      try {
+        await signOut();
+      } catch (error) {
+        console.log('Clerk sign out failed (likely offline):', error);
+      }
+      
+      onClose();
+      router.replace('/(auth)/welcome');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    }
   };
 
   return (

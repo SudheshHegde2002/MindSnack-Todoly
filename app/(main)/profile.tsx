@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './_styles/todoStyles';
 import { styles as settingsStyles } from './_styles/settingsModalStyles';
 import OfflineIndicator from './components/OfflineIndicator';
+import { authService } from '../../services/authService';
 
 export default function ProfileScreen() {
   const { isSignedIn, isLoaded, signOut } = useAuth();
@@ -24,8 +25,25 @@ export default function ProfileScreen() {
           text: 'Yes',
           style: 'destructive',
           onPress: async () => {
-            await signOut();
-            router.replace('/(auth)/welcome');
+            try {
+ 
+              // NOTE: User's todos/groups are NOT deleted - they'll sync back when user signs in
+              await authService.performSignOut();
+              
+              // Try to sign out from Clerk (works only when online)
+              // If offline, this will fail silently but we already cleared tokens
+              try {
+                await signOut();
+              } catch (error) {
+                console.log('Clerk sign out failed (likely offline):', error);
+                // This is okay - we already cleared tokens manually
+              }
+              
+              router.replace('/(auth)/welcome');
+            } catch (error) {
+              console.error('Error during sign out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
           },
         },
       ],
