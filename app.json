@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "todoly",
-    "slug": "todoly",
+    "name": "Todo-ly",
+    "slug": "Todo-ly",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

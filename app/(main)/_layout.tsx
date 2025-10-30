@@ -33,7 +33,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Todoly',
+          title: 'Todo-ly',
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="home" size={size} color={color} />
           ),
@@ -148,7 +148,7 @@ export default function MainLayout() {
        }}
        />
       <Tabs.Screen
-       name="_styles/homeScreenStyles"
+       name="_styles/homeStyles"
        options={{
         href: null,
        }}

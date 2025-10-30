@@ -48,15 +48,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View style={settingsStyles.infoCard}>
-            <MaterialIcons name="person" size={20} color="#6B7280" />
-            <View style={settingsStyles.infoTextContainer}>
-              <Text style={settingsStyles.infoLabel}>User ID</Text>
-              <Text style={settingsStyles.infoValue} numberOfLines={1}>
-                {user?.id || 'Not available'}
-              </Text>
-            </View>
-          </View>
         </View>
 
         <View style={settingsStyles.section}>
