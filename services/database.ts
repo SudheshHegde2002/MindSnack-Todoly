@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 const db = SQLite.openDatabaseSync('todoly.db');
-const Dev = true;
+const Dev = false;
 export type LocalTodo = {
   id: string;
   user_id: string;
