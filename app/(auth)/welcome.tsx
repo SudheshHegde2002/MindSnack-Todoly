@@ -6,6 +6,7 @@ import { useAuth, useOAuth } from '@clerk/clerk-expo';
 import React from 'react';
 import { styles } from './_styles/welcomeStyles';
 import { makeRedirectUri } from 'expo-auth-session';
+import NetInfo from '@react-native-community/netinfo';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function WelcomeScreen() {
@@ -13,8 +14,17 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = React.useState(false);
+  const [isOnline, setIsOnline] = React.useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOnline(!!state.isConnected);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const onGoogleSignIn = React.useCallback(async () => {
+    if (!isOnline) return;
     try {
       setIsAuthenticating(true);
       const redirectUrl = makeRedirectUri({ scheme: 'todoly' });
@@ -32,7 +42,7 @@ export default function WelcomeScreen() {
       console.error('OAuth error:', err);
       setIsAuthenticating(false);
     }
-  }, [router, startOAuthFlow]);
+  }, [router, startOAuthFlow, isOnline]);
 
   if (isLoaded && isSignedIn) {
     return <Redirect href="/(main)" />;
@@ -45,6 +55,8 @@ export default function WelcomeScreen() {
       </View>
     );
   }
+
+  const disabledStyle = { opacity: 0.5 };
 
   return (
     <View style={styles.container}>
@@ -85,23 +97,42 @@ export default function WelcomeScreen() {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={[styles.primaryButton, !isOnline && disabledStyle]}
             onPress={onGoogleSignIn}
+            disabled={!isOnline}
           >
             <Text style={styles.primaryButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
-          <Link href="/(auth)/sign-in" asChild>
-            <TouchableOpacity style={styles.secondaryButton}>
+          {isOnline ? (
+            <Link href="/(auth)/sign-in" asChild>
+              <TouchableOpacity style={styles.secondaryButton}>
+                <Text style={styles.secondaryButtonText}>Sign in with Email</Text>
+              </TouchableOpacity>
+            </Link>
+          ) : (
+            <TouchableOpacity style={[styles.secondaryButton, disabledStyle]} disabled>
               <Text style={styles.secondaryButtonText}>Sign in with Email</Text>
             </TouchableOpacity>
-          </Link>
+          )}
+
+          {!isOnline && (
+            <View style={{ marginTop: 12, paddingHorizontal: 8 }}>
+              <Text style={{ color: '#EF4444', textAlign: 'center' }}>
+                Please connect to the internet to log in or sign up
+              </Text>
+            </View>
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
-            <Link href="/(auth)/sign-up">
-              <Text style={styles.footerLink}>Sign up</Text>
-            </Link>
+            {isOnline ? (
+              <Link href="/(auth)/sign-up">
+                <Text style={styles.footerLink}>Sign up</Text>
+              </Link>
+            ) : (
+              <Text style={[styles.footerLink, disabledStyle]}>Sign up</Text>
+            )}
           </View>
         </View>
       </View>
