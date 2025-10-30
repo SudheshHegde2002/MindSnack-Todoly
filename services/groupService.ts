@@ -48,38 +48,62 @@ class GroupService {
       try {
         console.log('Attempting to insert group into Supabase:', { user_id: userId, name });
 
-        const { data, error } = await supabase.from('groups').insert({
-          user_id: userId,
-          name: name,
-        }).select();
+        // BUG FIX: Check if group already exists to prevent duplicates
+        const { data: existingGroup, error: checkError } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('name', name)
+          .maybeSingle();
 
-        if (error) {
-          console.error('Supabase group insert error, will queue for later:', JSON.stringify(error, null, 2));
-          localDb.addGroupToQueue('add', tempId, group);
-          return { ...group, synced: 0 };
-        }
+        let supabaseId: string;
+        let createdAt: string;
 
-        if (data && data[0]) {
-          console.log('Supabase group insert success:', data);
-          const supabaseId = data[0].id;
-
-          // Replace temp ID with real Supabase ID
-          localDb.deleteGroup(tempId);
-          const syncedGroup: Omit<LocalGroup, 'synced'> = {
-            id: supabaseId,
+        if (existingGroup && !checkError) {
+          // Group already exists, use existing ID
+          console.log('Group already exists in Supabase, using existing:', existingGroup.id);
+          supabaseId = existingGroup.id;
+          createdAt = existingGroup.created_at;
+        } else {
+          // Create new group
+          const { data, error } = await supabase.from('groups').insert({
             user_id: userId,
             name: name,
-            created_at: data[0].created_at,
-          };
+          }).select();
 
-          localDb.insertGroup(syncedGroup);
-          localDb.markGroupAsSynced(supabaseId);
+          if (error) {
+            console.error('Supabase group insert error, will queue for later:', JSON.stringify(error, null, 2));
+            localDb.addGroupToQueue('add', tempId, group);
+            return { ...group, synced: 0 };
+          }
 
-          // Update any todos that reference this temp group ID
-          this.updateTodosGroupId(tempId, supabaseId);
+          if (!data || !data[0]) {
+            console.error('No data returned from group insert');
+            localDb.addGroupToQueue('add', tempId, group);
+            return { ...group, synced: 0 };
+          }
 
-          return { ...syncedGroup, synced: 1 };
+          console.log('Supabase group insert success:', data);
+          supabaseId = data[0].id;
+          createdAt = data[0].created_at;
         }
+
+        // Replace temp ID with real Supabase ID
+        localDb.deleteGroup(tempId);
+        const syncedGroup: Omit<LocalGroup, 'synced'> = {
+          id: supabaseId,
+          user_id: userId,
+          name: name,
+          created_at: createdAt,
+        };
+
+        localDb.insertGroup(syncedGroup);
+        localDb.markGroupAsSynced(supabaseId);
+
+        // Update any todos that reference this temp group ID
+        this.updateTodosGroupId(tempId, supabaseId);
+
+        return { ...syncedGroup, synced: 1 };
       } catch (error) {
         console.error('Failed to create group online, queuing for sync:', error);
         localDb.addGroupToQueue('add', tempId, group);
@@ -288,41 +312,63 @@ class GroupService {
       for (const item of addItems) {
         try {
           const data = JSON.parse(item.data);
+          const oldTempId = item.group_id;
 
-          const { data: insertData, error: addError } = await supabase.from('groups').insert({
-            user_id: data.user_id,
-            name: data.name,
-          }).select();
+          // BUG FIX: Check if group already exists in Supabase by name
+          // This prevents duplicate groups when syncing offline-created groups
+          const { data: existingGroup, error: checkError } = await supabase
+            .from('groups')
+            .select('*')
+            .eq('user_id', data.user_id)
+            .eq('name', data.name)
+            .maybeSingle();
 
-          if (addError) {
-            console.error('Queue sync group add error:', addError);
-            continue; // Skip this item but continue with others
-          }
+          let supabaseId: string;
 
-          if (insertData && insertData[0]) {
-            const supabaseId = insertData[0].id;
-            const oldTempId = item.group_id;
-
-            // Update local database with Supabase ID
-            localDb.deleteGroup(oldTempId);
-            localDb.insertGroup({
-              id: supabaseId,
+          if (existingGroup && !checkError) {
+            // Group already exists in Supabase, use its ID
+            console.log('Group already exists in Supabase, using existing ID:', existingGroup.id);
+            supabaseId = existingGroup.id;
+          } else {
+            // Group doesn't exist, create it
+            const { data: insertData, error: addError } = await supabase.from('groups').insert({
               user_id: data.user_id,
               name: data.name,
-              created_at: insertData[0].created_at,
-            });
-            localDb.markGroupAsSynced(supabaseId);
+            }).select();
 
-            // Update any other queued operations for this group to use the new ID
-            localDb.updateGroupQueueId(oldTempId, supabaseId);
-            console.log('Synced group add and updated queue items from temp ID to Supabase ID:', oldTempId, '->', supabaseId);
+            if (addError) {
+              console.error('Queue sync group add error:', addError);
+              continue; // Skip this item but continue with others
+            }
 
-            // IMPORTANT: Update todos and todo queue items that reference this group
-            this.updateTodosGroupId(oldTempId, supabaseId);
+            if (!insertData || !insertData[0]) {
+              console.error('No data returned from group insert');
+              continue;
+            }
 
-            // Remove from queue only after successful sync
-            localDb.removeFromGroupQueue(item.id);
+            supabaseId = insertData[0].id;
+            console.log('Created new group in Supabase:', supabaseId);
           }
+
+          // Update local database with Supabase ID
+          localDb.deleteGroup(oldTempId);
+          localDb.insertGroup({
+            id: supabaseId,
+            user_id: data.user_id,
+            name: data.name,
+            created_at: existingGroup?.created_at || new Date().toISOString(),
+          });
+          localDb.markGroupAsSynced(supabaseId);
+
+          // Update any other queued operations for this group to use the new ID
+          localDb.updateGroupQueueId(oldTempId, supabaseId);
+          console.log('Synced group add and updated queue items from temp ID to Supabase ID:', oldTempId, '->', supabaseId);
+
+          // IMPORTANT: Update todos and todo queue items that reference this group
+          this.updateTodosGroupId(oldTempId, supabaseId);
+
+          // Remove from queue only after successful sync
+          localDb.removeFromGroupQueue(item.id);
         } catch (error) {
           console.error(`Failed to sync group add item ${item.id}:`, error);
         }
@@ -414,6 +460,13 @@ class GroupService {
       return existing;
     }
 
+    // BUG FIX: If exists locally with temp ID and we're OFFLINE, return the temp group
+    // This prevents creating duplicate temp groups when adding todos offline
+    if (existing && existing.id.startsWith('temp_group_') && !this.isOnline) {
+      console.log('Group exists locally with temp ID and offline, returning existing temp group:', existing.id);
+      return existing;
+    }
+
     // If has temp ID or doesn't exist locally, check/create in Supabase
     if (this.isOnline) {
       try {
@@ -464,16 +517,15 @@ class GroupService {
       }
     }
 
-    // Group doesn't exist in Supabase, create it
-    console.log('Creating new group in Supabase:', name);
-    const newGroup = await this.addGroup(userId, name);
-    
-    // Delete temp group if exists
-    if (existing) {
-      localDb.deleteGroup(existing.id);
-      // Update todos that referenced the temp group
-      localDb.updateTodosGroupId(existing.id, newGroup.id);
+    // BUG FIX: If existing temp group and still need to create, return existing to avoid duplicates
+    if (existing && existing.id.startsWith('temp_group_')) {
+      console.log('Returning existing temp group to avoid duplicates:', existing.id);
+      return existing;
     }
+
+    // Group doesn't exist anywhere, create it
+    console.log('Creating new group:', name);
+    const newGroup = await this.addGroup(userId, name);
     
     return newGroup;
   }
