@@ -1,6 +1,6 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Redirect, useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './_styles/todoStyles';
 import { styles as settingsStyles } from './_styles/settingsModalStyles';
@@ -12,8 +12,25 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
-    router.replace('/(auth)/welcome');
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+            router.replace('/(auth)/welcome');
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   if (!isLoaded) {
