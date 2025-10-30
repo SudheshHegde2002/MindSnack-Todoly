@@ -3,25 +3,47 @@ import { useUser } from '@clerk/clerk-expo';
 import { todoService } from '../services/todoService';
 import { groupService } from '../services/groupService';
 import { LocalTodo, localDb } from '../services/database';
+import { offlineUserService } from '../services/offlineUserService';
 
 export function useTodos() {
   const { user } = useUser();
   const [todos, setTodos] = useState<LocalTodo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const loadTodos = useCallback(() => {
-    if (!user?.id) return;
-    const localTodos = todoService.getTodos(user.id);
-    setTodos(localTodos);
-    setIsLoading(false);
+  // Get user ID from Clerk or local storage (offline-first)
+  useEffect(() => {
+    const getUserId = async () => {
+      if (user?.id) {
+        // Online: Use Clerk's user ID and store it locally
+        setUserId(user.id);
+        await offlineUserService.storeUserId(user.id);
+      } else {
+        // Offline: Use locally stored user ID
+        const storedUserId = await offlineUserService.getStoredUserId();
+        if (storedUserId) {
+          setUserId(storedUserId);
+          console.log(' Using offline user ID:', storedUserId);
+        }
+      }
+    };
+
+    getUserId();
   }, [user?.id]);
 
+  const loadTodos = useCallback(() => {
+    if (!userId) return;
+    const localTodos = todoService.getTodos(userId);
+    setTodos(localTodos);
+    setIsLoading(false);
+  }, [userId]);
+
   useEffect(() => {
-    if (!user?.id) return;
+    if (!userId) return;
 
     loadTodos();
-    todoService.fetchFromSupabase(user.id).then(() => {
+    todoService.fetchFromSupabase(userId).then(() => {
       loadTodos();
     });
 
@@ -31,27 +53,27 @@ export function useTodos() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [user?.id, loadTodos]);
+  }, [userId, loadTodos]);
 
   const addTodo = useCallback(
     async (title: string, description: string, groupId: string) => {
-      if (!user?.id) return;
+      if (!userId) return;
       
       // If group has a temp ID, get the group name and ensure it exists in Supabase first
       if (groupId.startsWith('temp_group_')) {
         const group = localDb.getGroupById(groupId);
         if (group) {
           console.log('Group has temp ID, ensuring it exists in Supabase first:', group.name);
-          const syncedGroup = await groupService.ensureGroup(user.id, group.name);
+          const syncedGroup = await groupService.ensureGroup(userId, group.name);
           groupId = syncedGroup.id;
           console.log('Using synced group ID:', groupId);
         }
       }
       
-      await todoService.addTodo(user.id, title, description || null, groupId);
+      await todoService.addTodo(userId, title, description || null, groupId);
       loadTodos();
     },
-    [user?.id, loadTodos]
+    [userId, loadTodos]
   );
 
   const toggleComplete = useCallback(

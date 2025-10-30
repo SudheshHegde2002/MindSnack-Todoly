@@ -320,6 +320,25 @@ export const localDb = {
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
     db.runSync('DELETE FROM deleted_groups WHERE deleted_at < ?', [cutoffDate.toISOString()]);
   },
+
+  // Clear all user data on sign out (for privacy/security)
+  clearAllUserData: () => {
+    console.log('🧹 Clearing all user data from SQLite...');
+    
+    // Clear all todos and groups
+    db.runSync('DELETE FROM todos');
+    db.runSync('DELETE FROM groups');
+    
+    // Clear all queues
+    db.runSync('DELETE FROM sync_queue');
+    db.runSync('DELETE FROM group_sync_queue');
+    
+    // Clear deleted items tracking
+    db.runSync('DELETE FROM deleted_todos');
+    db.runSync('DELETE FROM deleted_groups');
+    
+    console.log('✅ All user data cleared from SQLite');
+  },
 };
 
 export default db;

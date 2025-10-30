@@ -8,7 +8,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import { authService } from '../../services/authService';
 
 export default function ProfileScreen() {
-  const { isSignedIn, isLoaded, signOut } = useAuth();
+  const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
 
@@ -51,18 +51,7 @@ export default function ProfileScreen() {
     );
   };
 
-  if (!isLoaded) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-      </View>
-    );
-  }
-
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/welcome" />;
-  }
-
+  // Auth is handled in app/index.tsx - no need to check here
   return (
     <View style={styles.container}>
       <ScrollView 

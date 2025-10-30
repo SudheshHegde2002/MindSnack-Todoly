@@ -1,4 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
+import { offlineUserService } from './offlineUserService';
+import { localDb } from './database';
 
 class AuthService {
 
@@ -9,6 +11,13 @@ class AuthService {
       // Clear all Clerk tokens from SecureStore
       // This is the key to making offline sign-out work
       await this.clearClerkTokens();
+
+      // Clear the offline user ID
+      await offlineUserService.clearUserId();
+
+      // IMPORTANT: Clear all local SQLite data
+      // This prevents the next user from seeing this user's data
+      localDb.clearAllUserData();
 
       console.log('Sign out completed successfully');
     } catch (error) {

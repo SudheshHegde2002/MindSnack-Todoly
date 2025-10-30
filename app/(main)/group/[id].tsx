@@ -1,5 +1,4 @@
-import { useAuth } from '@clerk/clerk-expo';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, SectionList, Animated, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 'react';
@@ -13,7 +12,6 @@ import { useTodos } from '../../../hooks/useTodos';
 import { useGroups } from '../../../hooks/useGroups';
 
 export default function GroupDetailScreen() {
-  const { isSignedIn, isLoaded } = useAuth();
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
@@ -165,16 +163,13 @@ export default function GroupDetailScreen() {
     });
   }, [navigation, currentGroup, selectionMode, selectedTodoIds, headerButtonScale]);
 
-  if (!isLoaded || isLoading) {
+  // Only show loading while data is loading - auth is handled in app/index.tsx
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
-  }
-
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/welcome" />;
   }
 
   if (!currentGroup) {

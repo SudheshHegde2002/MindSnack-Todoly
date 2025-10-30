@@ -1,5 +1,4 @@
-import { useAuth } from '@clerk/clerk-expo';
-import { Redirect, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, SectionList, Animated, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useMemo, useRef, useEffect, useCallback } from 'react';
@@ -12,7 +11,6 @@ import { useGroups } from '../../hooks/useGroups';
 import AddTodoModal from './components/AddTodoModal';
 
 export default function AllTasksScreen() {
-  const { isSignedIn, isLoaded } = useAuth();
   const navigation = useNavigation();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
@@ -190,16 +188,13 @@ export default function AllTasksScreen() {
     });
   }, [navigation, selectionMode, selectedTodoIds, headerButtonScale]);
 
-  if (!isLoaded || isLoading) {
+  // Only show loading while data is loading - auth is handled in app/index.tsx
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
-  }
-
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/welcome" />;
   }
 
   return (

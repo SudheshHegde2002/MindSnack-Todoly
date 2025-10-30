@@ -1,5 +1,4 @@
-import { useAuth } from '@clerk/clerk-expo';
-import { Redirect, useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Animated, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState, useLayoutEffect, useRef, useEffect, useCallback } from 'react';
@@ -12,7 +11,6 @@ import { useTodos } from '../../hooks/useTodos';
 import { LocalGroup } from '../../services/database';
 
 export default function HomeScreen() {
-  const { isSignedIn, isLoaded } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
   const [addGroupVisible, setAddGroupVisible] = useState(false);
@@ -150,16 +148,14 @@ export default function HomeScreen() {
     });
   }, [navigation, selectionMode, selectedGroupIds, headerButtonScale]);
 
-  if (!isLoaded || isLoading) {
+  // Only show loading while data is initially loading
+  // Don't wait for Clerk - auth is handled in app/index.tsx
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
-  }
-
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/welcome" />;
   }
 
   const renderGroupItem = ({ item }: { item: LocalGroup }) => {
