@@ -26,8 +26,13 @@ class TodoService {
       this.isOnline = state.isConnected ?? false;
 
       if (wasOffline && this.isOnline) {
-        console.log('Internet restored, syncing...');
-        this.syncWithSupabase();
+        console.log('Internet restored, will sync todos after groups...');
+        // BUG FIX: Delay todo sync to let groups sync first
+        // Groups need to sync first to convert temp group IDs to real IDs
+        setTimeout(() => {
+          console.log('Starting todo sync after group sync delay...');
+          this.syncWithSupabase();
+        }, 2000); // 2 second delay to allow groups to sync first
       }
     });
   }
@@ -252,7 +257,15 @@ class TodoService {
   }
 
   async syncWithSupabase(): Promise<void> {
-    if (!this.isOnline || this.syncInProgress) return;
+    if (!this.isOnline) return;
+    
+    // BUG FIX: If sync is in progress, wait and retry
+    // This ensures todos sync after groups finish syncing
+    if (this.syncInProgress) {
+      console.log('Todo sync already in progress, will retry in 1 second...');
+      setTimeout(() => this.syncWithSupabase(), 1000);
+      return;
+    }
 
     this.syncInProgress = true;
 
@@ -396,6 +409,16 @@ class TodoService {
       }
 
       console.log('Sync completed successfully');
+      
+      // BUG FIX: Check if there are still items in queue that couldn't sync
+      // This happens when todos have temp group_ids and need to wait
+      const remainingQueue = localDb.getQueue();
+      if (remainingQueue.length > 0 && this.isOnline) {
+        console.log(`${remainingQueue.length} items still in queue, will retry sync in 3 seconds...`);
+        setTimeout(() => {
+          this.syncWithSupabase();
+        }, 3000);
+      }
     } catch (error) {
       console.error('Sync failed:', error);
     } finally {
