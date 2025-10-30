@@ -1,5 +1,6 @@
 import { Link, Redirect, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth } from '@clerk/clerk-expo';
 import React from 'react';
@@ -49,8 +50,37 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Todoly</Text>
-          <Text style={styles.subtitle}>Organize your life with elegance</Text>
+          <Text style={styles.title}>Todo-ly</Text>
+          <Text style={styles.subtitle}>Group your tasks with ease</Text>
+        </View>
+
+        {/* Lottie animation below the app name */}
+        <View style={{ width: '100%', maxWidth: 400, height: 220, marginBottom: 24, borderRadius: 12, overflow: 'hidden' }}>
+          <WebView
+            originWhitelist={["*"]}
+            style={{ backgroundColor: 'transparent' }}
+            javaScriptEnabled
+            domStorageEnabled
+            source={{
+              html: `<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <style>
+      html, body { margin:0; padding:0; background: transparent; height:100%; }
+      .wrap { display:flex; align-items:center; justify-content:center; height:100%; }
+      dotlottie-player { width:100%; height:100%; }
+    </style>
+    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <dotlottie-player src="https://lottie.host/aa0a87b3-8645-4603-b29c-975c563e96a8/NB3qEaEjPn.lottie" autoplay loop></dotlottie-player>
+    </div>
+  </body>
+  </html>`
+            }}
+          />
         </View>
 
         <View style={styles.buttonContainer}>
