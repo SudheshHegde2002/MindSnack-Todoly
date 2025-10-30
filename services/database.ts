@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 const db = SQLite.openDatabaseSync('todoly.db');
-
+const Dev = true;
 export type LocalTodo = {
   id: string;
   user_id: string;
@@ -112,6 +112,29 @@ export const initDatabase = () => {
       deleted_at TEXT NOT NULL
     );
   `);
+
+  // DEV ONLY: Clear sync queues on app restart to avoid garbage data during testing
+  // This helps clean up orphaned temp IDs from previous dev sessions
+  // IMPORTANT: This only runs in development mode, NOT in production!
+  if (Dev) {
+    console.log('🧹 [DEV MODE] Clearing sync queues on app restart...');
+    
+    // Clear todo sync queue
+    db.execSync('DELETE FROM sync_queue');
+    
+    // Clear group sync queue  
+    db.execSync('DELETE FROM group_sync_queue');
+    
+    // Clear deleted items tracking (optional, for clean slate)
+    db.execSync('DELETE FROM deleted_todos');
+    db.execSync('DELETE FROM deleted_groups');
+    
+    // Delete all items with temp IDs (from previous incomplete syncs)
+    db.execSync('DELETE FROM todos WHERE id LIKE "temp_%"');
+    db.execSync('DELETE FROM groups WHERE id LIKE "temp_group_%"');
+    
+    console.log('✅ [DEV MODE] Queues and temp data cleared successfully');
+  }
 };
 
 export const localDb = {

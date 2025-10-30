@@ -369,6 +369,13 @@ class TodoService {
 
           switch (item.action) {
             case 'update':
+              // BUG FIX: Skip if it's a temp ID (should never happen, but safety check)
+              if (item.todo_id.startsWith('temp_')) {
+                console.log('⚠️ Removing orphaned update queue item for temp ID:', item.todo_id);
+                localDb.removeFromQueue(item.id);
+                break;
+              }
+              
               const { error: updateError } = await supabase
                 .from('TodoTable')
                 .update({
@@ -382,13 +389,18 @@ class TodoService {
                 localDb.removeFromQueue(item.id);
               } else {
                 console.error('Queue sync update error:', updateError);
+                // If error is due to temp ID format, remove from queue
+                if (updateError.code === '22P02') {
+                  console.log('⚠️ Removing invalid queue item (temp ID format):', item.todo_id);
+                  localDb.removeFromQueue(item.id);
+                }
               }
               break;
 
             case 'delete':
               // Skip if it's a temp ID (todo was never synced to Supabase)
               if (item.todo_id.startsWith('temp_')) {
-                console.log('Removing delete queue item for temp ID (never synced):', item.todo_id);
+                console.log('⚠️ Removing orphaned delete queue item for temp ID:', item.todo_id);
                 localDb.removeFromQueue(item.id);
                 break;
               }
@@ -400,6 +412,11 @@ class TodoService {
                 localDb.removeFromQueue(item.id);
               } else {
                 console.error('Queue sync delete error:', deleteError);
+                // If error is due to temp ID format, remove from queue
+                if (deleteError.code === '22P02') {
+                  console.log('⚠️ Removing invalid queue item (temp ID format):', item.todo_id);
+                  localDb.removeFromQueue(item.id);
+                }
               }
               break;
           }
