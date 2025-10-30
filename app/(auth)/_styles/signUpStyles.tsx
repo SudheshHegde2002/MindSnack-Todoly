@@ -50,6 +50,26 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1A1A1A',
   },
+  passwordContainer: {
+    position: 'relative',
+    marginBottom: 24,
+  },
+  passwordInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 14,
+    paddingRight: 50,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 14,
+    top: 14,
+    padding: 2,
+  },
   primaryButton: {
     backgroundColor: '#6366F1',
     padding: 16,
@@ -102,5 +122,15 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     fontSize: 16,
     color: '#1A1A1A',
+  },
+  resendButton: {
+    marginTop: 16,
+    alignItems: 'center',
+    padding: 12,
+  },
+  resendButtonText: {
+    color: '#6366F1',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

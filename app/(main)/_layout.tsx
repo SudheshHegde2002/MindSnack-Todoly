@@ -61,24 +61,6 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="active"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="completed"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="home"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
         name="group/[id]"
         options={{
           href: null,

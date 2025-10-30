@@ -29,6 +29,12 @@ interface SignInPressParams {
   onSuccess: () => void;
 }
 
+interface ResendCodeParams {
+  signUp: SignUpResource | undefined;
+  isLoaded: boolean;
+  setError: (error: string) => void;
+}
+
 //this is a utility function to handle the sign up process
 export const handleSignUpPress = async ({
   signUp,
@@ -132,6 +138,26 @@ export const handleSignInPress = async ({
     const errorMessage = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Sign in failed. Please try again.';
     setError(errorMessage);
     Alert.alert('Sign In Error', errorMessage);
+  }
+};
+
+//this is a utility function to handle resending the verification code
+export const handleResendCode = async ({
+  signUp,
+  isLoaded,
+  setError,
+}: ResendCodeParams): Promise<void> => {
+  if (!isLoaded || !signUp) return;
+
+  try {
+    setError('');
+    await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+    Alert.alert('Success', 'Verification code has been resent to your email');
+  } catch (err: any) {
+    console.error('Resend code error:', JSON.stringify(err, null, 2));
+    const errorMessage = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || 'Failed to resend code';
+    setError(errorMessage);
+    Alert.alert('Error', errorMessage);
   }
 };
 
