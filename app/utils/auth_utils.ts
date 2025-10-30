@@ -1,5 +1,6 @@
 import { Alert } from 'react-native';
 import type { SignInResource, SignUpResource, SetActive } from '@clerk/types';
+import { offlineUserService } from '../../services/offlineUserService';
 
 interface SignUpPressParams {
   signUp: SignUpResource | undefined;
@@ -88,6 +89,14 @@ export const handleVerifyPress = async ({
 
     if (completeSignUp.status === 'complete') {
       await setActive({ session: completeSignUp.createdSessionId });
+      
+      // Store user ID immediately for offline access
+      const userId = completeSignUp.createdUserId;
+      if (userId) {
+        await offlineUserService.storeUserId(userId);
+        console.log('✅ Stored user ID after sign up:', userId);
+      }
+      
       onSuccess();
     } else {
       console.error(JSON.stringify(completeSignUp, null, 2));
@@ -128,6 +137,23 @@ export const handleSignInPress = async ({
 
     if (signInAttempt.status === 'complete') {
       await setActive({ session: signInAttempt.createdSessionId });
+      
+      // Store user ID immediately for offline access
+      // Try to get user ID from the session (Clerk's structure varies)
+      const userId = (signInAttempt as any).userData?.id || (signInAttempt as any).userId;
+      if (userId) {
+        await offlineUserService.storeUserId(userId);
+        console.log('✅ Stored user ID after sign in:', userId);
+      } else {
+        console.warn('⚠️ Could not extract user ID from sign-in, will rely on hooks to store it');
+      }
+      
+      // Also store email if available
+      if (emailAddress) {
+        await offlineUserService.storeEmail(emailAddress);
+        console.log('✅ Stored email after sign in:', emailAddress);
+      }
+      
       onSuccess();
     } else {
       console.error('Sign in incomplete:', JSON.stringify(signInAttempt, null, 2));

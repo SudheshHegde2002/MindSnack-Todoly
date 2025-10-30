@@ -2,21 +2,22 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import NetInfo from '@react-native-community/netinfo';
+import { offlineUserService } from '../services/offlineUserService';
 
 export default function Index() {
   const { isSignedIn, isLoaded } = useAuth();
   const [hasLocalAuth, setHasLocalAuth] = useState<boolean | null>(null);
   const [isOnline, setIsOnline] = useState(true);
 
-  // Check for local auth tokens (offline-first approach)
+  // Check for local auth using stored user ID (offline-first approach)
   useEffect(() => {
     const checkLocalAuth = async () => {
       try {
-        // Check if user has Clerk tokens in SecureStore
-        const sessionToken = await SecureStore.getItemAsync('__clerk_client_jwt');
-        const hasAuth = sessionToken !== null;
+        // Check if we have a stored user ID (more reliable than checking Clerk tokens)
+        const storedUserId = await offlineUserService.getStoredUserId();
+        const hasAuth = storedUserId !== null;
+        console.log('📱 Auth check - Stored user ID:', storedUserId ? 'Found' : 'Not found');
         setHasLocalAuth(hasAuth);
       } catch (error) {
         console.error('Error checking local auth:', error);
@@ -37,14 +38,16 @@ export default function Index() {
   }, []);
 
   // OFFLINE-FIRST LOGIC:
-  // If we have local auth tokens, let the user in immediately
-  // Don't wait for Clerk to verify online
+  // If we have a stored user ID, the user is logged in
+  // Let them in immediately without waiting for Clerk
   if (hasLocalAuth === true) {
+    console.log('✅ User is authenticated (has stored user ID) - redirecting to main');
     return <Redirect href="/(main)" />;
   }
 
-  // If we've checked and there's no local auth, redirect to welcome
+  // If we've checked and there's no stored user ID, user needs to log in
   if (hasLocalAuth === false) {
+    console.log('❌ User is not authenticated - redirecting to welcome');
     return <Redirect href="/(auth)/welcome" />;
   }
 

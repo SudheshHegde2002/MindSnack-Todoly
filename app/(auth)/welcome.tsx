@@ -2,11 +2,12 @@ import { Link, Redirect, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
-import { useAuth, useOAuth } from '@clerk/clerk-expo';
+import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
 import React from 'react';
 import { styles } from './_styles/welcomeStyles';
 import { makeRedirectUri } from 'expo-auth-session';
 import NetInfo from '@react-native-community/netinfo';
+import { offlineUserService } from '../../services/offlineUserService';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function WelcomeScreen() {
@@ -28,10 +29,28 @@ export default function WelcomeScreen() {
     try {
       setIsAuthenticating(true);
       const redirectUrl = makeRedirectUri({ scheme: 'todoly' });
-      const { createdSessionId, setActive } = await startOAuthFlow({ redirectUrl });
+      const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow({ redirectUrl });
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
+        
+        // Store user ID immediately for offline access
+        // User ID can come from either signUp or signIn depending on if it's a new user or existing user
+        let userId: string | undefined;
+        if (signUp?.createdUserId) {
+          userId = signUp.createdUserId;
+        } else if (signIn) {
+          // Try different possible locations for user ID in Clerk's structure
+          userId = (signIn as any).userData?.id || (signIn as any).userId;
+        }
+        
+        if (userId) {
+          await offlineUserService.storeUserId(userId);
+          console.log('✅ Stored user ID after Google OAuth:', userId);
+        } else {
+          console.warn('⚠️ Could not extract user ID from OAuth flow, will rely on hooks to store it');
+        }
+        
         // Explicitly navigate to home after successful auth
         router.replace('/(main)');
       } else {
