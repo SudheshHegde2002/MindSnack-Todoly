@@ -6,11 +6,22 @@ import { styles } from './_styles/todoStyles';
 import { styles as settingsStyles } from './_styles/settingsModalStyles';
 import OfflineIndicator from './components/OfflineIndicator';
 import { authService } from '../../services/authService';
+import { useEffect, useState } from 'react';
+import { offlineUserService } from '../../services/offlineUserService';
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const [storedEmail, setStoredEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEmail = async () => {
+      const email = await offlineUserService.getStoredEmail();
+      setStoredEmail(email);
+    };
+    fetchEmail();
+  }, [user?.primaryEmailAddress?.emailAddress]);
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -67,7 +78,7 @@ export default function ProfileScreen() {
             <View style={settingsStyles.infoTextContainer}>
               <Text style={settingsStyles.infoLabel}>Email</Text>
               <Text style={settingsStyles.infoValue}>
-                {user?.primaryEmailAddress?.emailAddress || 'Not available'}
+                {user?.primaryEmailAddress?.emailAddress || storedEmail || 'Not available'}
               </Text>
             </View>
           </View>

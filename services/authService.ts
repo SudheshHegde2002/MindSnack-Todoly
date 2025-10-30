@@ -15,6 +15,9 @@ class AuthService {
       // Clear the offline user ID
       await offlineUserService.clearUserId();
 
+      // Clear the offline email
+      await offlineUserService.clearEmail();
+
       // IMPORTANT: Clear all local SQLite data
       // This prevents the next user from seeing this user's data
       localDb.clearAllUserData();

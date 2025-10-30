@@ -14,13 +14,15 @@ export function useTodos() {
 
   // Get user ID from Clerk or local storage (offline-first)
   useEffect(() => {
-    const getUserId = async () => {
+    const getUserIdAndEmail = async () => {
       if (user?.id) {
-        // Online: Use Clerk's user ID and store it locally
         setUserId(user.id);
         await offlineUserService.storeUserId(user.id);
+        const primaryEmail = user?.primaryEmailAddress?.emailAddress;
+        if (primaryEmail) {
+          await offlineUserService.storeEmail(primaryEmail);
+        }
       } else {
-        // Offline: Use locally stored user ID
         const storedUserId = await offlineUserService.getStoredUserId();
         if (storedUserId) {
           setUserId(storedUserId);
@@ -28,8 +30,7 @@ export function useTodos() {
         }
       }
     };
-
-    getUserId();
+    getUserIdAndEmail();
   }, [user?.id]);
 
   const loadTodos = useCallback(() => {

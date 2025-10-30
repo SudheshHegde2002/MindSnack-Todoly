@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { styles } from '../_styles/settingsModalStyles';
 import { authService } from '../../../services/authService';
+import { offlineUserService } from '../../../services/offlineUserService';
 
 type SettingsModalProps = {
   visible: boolean;
@@ -15,6 +16,15 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const [storedEmail, setStoredEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEmail = async () => {
+      const email = await offlineUserService.getStoredEmail();
+      setStoredEmail(email);
+    };
+    fetchEmail();
+  }, [user?.primaryEmailAddress?.emailAddress]);
 
   const handleSignOut = async () => {
     try {
@@ -60,7 +70,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoLabel}>Email</Text>
                   <Text style={styles.infoValue}>
-                    {user?.primaryEmailAddress?.emailAddress || 'Not available'}
+                    {user?.primaryEmailAddress?.emailAddress || storedEmail || 'Not available'}
                   </Text>
                 </View>
               </View>
