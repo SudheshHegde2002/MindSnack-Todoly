@@ -31,6 +31,7 @@ export default function TodoItem({
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const checkboxScaleAnim = useRef(new Animated.Value(1)).current;
   const borderColorAnim = useRef(new Animated.Value(0)).current;
+  // No opacity animation to avoid flicker/disappear
 
   // Animation when entering/exiting selection mode
   useEffect(() => {
@@ -71,6 +72,8 @@ export default function TodoItem({
     }
   }, [isSelected]);
 
+  // No mount fade-in to avoid blinking when items move across lists
+
   const handleLongPress = () => {
     if (selectionMode) return;
     
@@ -100,6 +103,31 @@ export default function TodoItem({
     }
   };
 
+  const handleTogglePress = () => {
+    // Non-flickering pulse animation: scale down slightly, toggle, then scale back up
+    Animated.sequence([
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+        tension: 250,
+        friction: 12,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.98,
+        duration: 0,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onToggleComplete(todo.id);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 200,
+        friction: 14,
+      }).start();
+    });
+  };
+
   const handlePress = () => {
     if (selectionMode && onSelect) {
       onSelect(todo.id);
@@ -112,9 +140,7 @@ export default function TodoItem({
         styles.container,
         selectionMode && styles.containerSelectionMode,
         isSelected && styles.containerSelected,
-        {
-          transform: [{ scale: scaleAnim }]
-        }
+        { transform: [{ scale: scaleAnim }] }
       ]}
       onLongPress={handleLongPress}
       onPress={handlePress}
@@ -136,7 +162,7 @@ export default function TodoItem({
       ) : (
         <TouchableOpacity
           style={styles.checkboxContainer}
-          onPress={() => onToggleComplete(todo.id)}
+          onPress={handleTogglePress}
         >
           {isCompleted ? (
             <MaterialIcons name="check-circle" size={24} color="#10B981" />
