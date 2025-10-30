@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -22,10 +22,26 @@ type AddGroupModalProps = {
 export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) {
   const { groups, addGroup } = useGroups();
   const [groupName, setGroupName] = useState('');
+  const [modalKey, setModalKey] = useState(0);
+  const inputRef = useRef<TextInput>(null);
+
+  // Reset modal state and remount when it becomes visible
+  useEffect(() => {
+    if (visible) {
+      setGroupName('');
+      setModalKey(prev => prev + 1);
+      // Delay focusing to allow modal animation and remount
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
 
   const handleCancel = () => {
     setGroupName('');
     Keyboard.dismiss();
+    inputRef.current?.blur(); // Explicitly blur the input
     onClose();
   };
 
@@ -40,6 +56,7 @@ export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) 
     }
 
     Keyboard.dismiss();
+    inputRef.current?.blur(); // Explicitly blur the input
     
     try {
       await addGroup(groupName.trim());
@@ -70,9 +87,10 @@ export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) 
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.modalBody, { paddingBottom: 40 }]}>
+          <View style={[styles.modalBody, { paddingBottom: 40 }]} key={modalKey}>
             <Text style={styles.label}>Group Name</Text>
             <TextInput
+              ref={inputRef}
               style={styles.input}
               placeholder="personal, work, etc"
               value={groupName}
@@ -80,6 +98,7 @@ export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) 
               onSubmitEditing={handleCreate}
               returnKeyType="done"
               autoFocus
+              blurOnSubmit={false}
             />
 
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 32 }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -30,6 +30,24 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [pendingGroupSelection, setPendingGroupSelection] = useState<string | null>(null);
+  const [modalKey, setModalKey] = useState(0);
+  const titleInputRef = useRef<TextInput>(null);
+
+  // Reset modal state and remount when it becomes visible
+  useEffect(() => {
+    if (visible) {
+      setTitle('');
+      setDescription('');
+      setIsCreatingGroup(false);
+      setNewGroupName('');
+      setModalKey(prev => prev + 1);
+      // Delay focusing to allow modal animation and remount
+      const timer = setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
 
   // Filter to get unique groups by name, keeping the first occurrence
   const uniqueGroups = React.useMemo(() => {
@@ -72,6 +90,8 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
       setTitle('');
       setDescription('');
       setSelectedGroupId(uniqueGroups[0]?.id || '');
+      titleInputRef.current?.blur(); // Explicitly blur the input
+      Keyboard.dismiss();
       onClose();
     }
   };
@@ -82,6 +102,8 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
     setSelectedGroupId(uniqueGroups[0]?.id || '');
     setIsCreatingGroup(false);
     setNewGroupName('');
+    titleInputRef.current?.blur(); // Explicitly blur the input
+    Keyboard.dismiss();
     onClose();
   };
 
@@ -134,14 +156,17 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
             style={styles.modalBody} 
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="always"
+            key={modalKey}
           >
             <Text style={styles.label}>Title</Text>
             <TextInput
+              ref={titleInputRef}
               style={styles.input}
               placeholder="Enter task title"
               value={title}
               onChangeText={setTitle}
               autoFocus
+              blurOnSubmit={false}
             />
 
                <Text style={styles.label}>Description (Optional)</Text>
