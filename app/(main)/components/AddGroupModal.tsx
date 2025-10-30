@@ -48,8 +48,9 @@ export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) 
   const handleCreate = async () => {
     if (!groupName.trim()) return;
 
-    // Check if group with this name already exists
-    const existingGroup = groups.find(g => g.name.toLowerCase() === groupName.trim().toLowerCase());
+    // BUG FIX: Check if group with this name already exists (CASE SENSITIVE)
+    // "online" and "Online" are considered different groups
+    const existingGroup = groups.find(g => g.name === groupName.trim());
     if (existingGroup) {
       Alert.alert('Group Exists', `A group named "${groupName.trim()}" already exists.`);
       return;
@@ -88,7 +89,7 @@ export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) 
           </View>
 
           <View style={[styles.modalBody, { paddingBottom: 40 }]} key={modalKey}>
-            <Text style={styles.label}>Group Name</Text>
+            <Text style={styles.label}>Group Name (max 25 characters)</Text>
             <TextInput
               ref={inputRef}
               style={styles.input}
@@ -97,9 +98,15 @@ export default function AddGroupModal({ visible, onClose }: AddGroupModalProps) 
               onChangeText={setGroupName}
               onSubmitEditing={handleCreate}
               returnKeyType="done"
+              maxLength={25}
               autoFocus
               blurOnSubmit={false}
             />
+            {groupName.length > 0 && (
+              <Text style={{ fontSize: 11, color: groupName.length >= 30 ? '#EF4444' : '#9CA3AF', marginTop: 4, marginBottom: 8 }}>
+                {groupName.length}/25
+              </Text>
+            )}
 
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 32 }}>
               <TouchableOpacity

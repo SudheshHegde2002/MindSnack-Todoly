@@ -78,7 +78,7 @@ export default function RenameGroupModal({ visible, onClose, onRename, currentNa
           </View>
 
           <View style={[styles.modalBody, { paddingBottom: 40 }]}>
-            <Text style={styles.label}>Group Name</Text>
+            <Text style={styles.label}>Group Name (max 25 characters)</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter group name"
@@ -86,8 +86,14 @@ export default function RenameGroupModal({ visible, onClose, onRename, currentNa
               onChangeText={setGroupName}
               onSubmitEditing={handleRename}
               returnKeyType="done"
+              maxLength={25}
               autoFocus
             />
+            {groupName.length > 0 && (
+              <Text style={{ fontSize: 11, color: groupName.length >= 30 ? '#EF4444' : '#9CA3AF', marginTop: 4, marginBottom: 8 }}>
+                {groupName.length}/25
+              </Text>
+            )}
 
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 32 }}>
               <TouchableOpacity

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from '../_styles/todoItemStyles';
@@ -28,6 +28,7 @@ export default function TodoItem({
   groupName
 }: TodoItemProps) {
   const isCompleted = todo.is_completed === 1;
+  const [isExpanded, setIsExpanded] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const checkboxScaleAnim = useRef(new Animated.Value(1)).current;
   const borderColorAnim = useRef(new Animated.Value(0)).current;
@@ -131,6 +132,9 @@ export default function TodoItem({
   const handlePress = () => {
     if (selectionMode && onSelect) {
       onSelect(todo.id);
+    } else {
+      // Toggle expansion when tapping the todo (not in selection mode)
+      setIsExpanded(!isExpanded);
     }
   };
 
@@ -177,7 +181,10 @@ export default function TodoItem({
           {todo.title}
         </Text>
         {todo.description ? (
-          <Text style={styles.description} numberOfLines={2}>
+          <Text 
+            style={[styles.description, isCompleted && styles.descriptionCompleted]} 
+            numberOfLines={isExpanded ? undefined : 2}
+          >
             {todo.description}
           </Text>
         ) : null}

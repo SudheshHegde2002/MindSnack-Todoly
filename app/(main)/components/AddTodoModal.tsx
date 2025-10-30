@@ -110,8 +110,9 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) return;
     
-    // Check if group with this name already exists
-    const existingGroup = uniqueGroups.find(g => g.name.toLowerCase() === newGroupName.trim().toLowerCase());
+    // BUG FIX: Check if group with this name already exists (CASE SENSITIVE)
+    // "online" and "Online" are considered different groups
+    const existingGroup = uniqueGroups.find(g => g.name === newGroupName.trim());
     if (existingGroup) {
       Alert.alert('Group Exists', `A group named "${newGroupName.trim()}" already exists.`);
       return;
@@ -158,27 +159,39 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
             keyboardShouldPersistTaps="always"
             key={modalKey}
           >
-            <Text style={styles.label}>Title</Text>
+            <Text style={styles.label}>Title (max 100 characters)</Text>
             <TextInput
               ref={titleInputRef}
               style={styles.input}
               placeholder="Enter task title"
               value={title}
               onChangeText={setTitle}
+              maxLength={100}
               autoFocus
               blurOnSubmit={false}
             />
+            {title.length > 0 && (
+              <Text style={{ fontSize: 11, color: title.length >= 100 ? '#EF4444' : '#9CA3AF', marginTop: -12, marginBottom: 8 }}>
+                {title.length}/100
+              </Text>
+            )}
 
-               <Text style={styles.label}>Description (Optional)</Text>
+               <Text style={styles.label}>Description (max 500 characters, optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Enter task description"
                 value={description}
                 onChangeText={setDescription}
+                maxLength={500}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
               />
+              {description.length > 0 && (
+                <Text style={{ fontSize: 11, color: description.length >= 500 ? '#EF4444' : '#9CA3AF', marginTop: -12, marginBottom: 8 }}>
+                  {description.length}/500
+                </Text>
+              )}
 
               {!initialGroupId && (
                 <>
@@ -217,15 +230,23 @@ export default function AddTodoModal({ visible, onClose, onAdd, initialGroupId }
             {isCreatingGroup && (
               <View style={{ marginTop: 12, marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <TextInput
-                    style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                    placeholder="Enter group name"
-                    value={newGroupName}
-                    onChangeText={setNewGroupName}
-                    onSubmitEditing={handleCreateGroup}
-                    returnKeyType="done"
-                    autoFocus
-                  />
+                  <View style={{ flex: 1 }}>
+                    <TextInput
+                      style={[styles.input, { marginBottom: 0 }]}
+                      placeholder="Enter group name (max 25 characters)"
+                      value={newGroupName}
+                      onChangeText={setNewGroupName}
+                      onSubmitEditing={handleCreateGroup}
+                      returnKeyType="done"
+                      maxLength={25}
+                      autoFocus
+                    />
+                    {newGroupName.length > 0 && (
+                      <Text style={{ fontSize: 10, color: newGroupName.length >= 30 ? '#EF4444' : '#9CA3AF', marginTop: 2 }}>
+                        {newGroupName.length}/25
+                      </Text>
+                    )}
+                  </View>
                   <TouchableOpacity
                     onPress={() => {
                       setIsCreatingGroup(false);
