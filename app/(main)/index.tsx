@@ -1,8 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useRouter, useFocusEffect } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Animated, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
+import React, { useState, useLayoutEffect, useRef, useEffect, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './_styles/todoStyles';
 import AddGroupModal from './components/AddGroupModal';
@@ -24,6 +24,35 @@ export default function HomeScreen() {
   const headerButtonScale = useRef(new Animated.Value(1)).current;
   // Animation for group cards
   const groupCardScale = useRef(new Animated.Value(1)).current;
+
+  // Clear selection when screen loses focus or when navigating away
+  useFocusEffect(
+    useCallback(() => {
+      // Screen is focused - do nothing
+      return () => {
+        // Screen is unfocused - clear selection
+        setSelectionMode(false);
+        setSelectedGroupIds(new Set());
+      };
+    }, [])
+  );
+
+  // Clear selection if selected groups no longer exist
+  useEffect(() => {
+    if (selectedGroupIds.size > 0) {
+      const groupIds = new Set(groups.map(g => g.id));
+      const validSelectedIds = Array.from(selectedGroupIds).filter(id => groupIds.has(id));
+      
+      if (validSelectedIds.length !== selectedGroupIds.size) {
+        if (validSelectedIds.length === 0) {
+          setSelectionMode(false);
+          setSelectedGroupIds(new Set());
+        } else {
+          setSelectedGroupIds(new Set(validSelectedIds));
+        }
+      }
+    }
+  }, [groups, selectedGroupIds]);
 
   useEffect(() => {
     Animated.spring(groupCardScale, {

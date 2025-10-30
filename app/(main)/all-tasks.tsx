@@ -1,8 +1,8 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { Redirect } from 'expo-router';
+import { Redirect, useFocusEffect } from 'expo-router';
 import { View, Text, TouchableOpacity, ActivityIndicator, SectionList, Animated, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useState, useLayoutEffect, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useLayoutEffect, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { styles } from './_styles/todoStyles';
 import TodoItem from './components/TodoItem';
@@ -19,6 +19,35 @@ export default function AllTasksScreen() {
   const { todos, isLoading, toggleComplete, deleteTodo, deleteTodos, addTodo } = useTodos();
   const [modalVisible, setModalVisible] = useState(false);
   const { groups } = useGroups();
+
+  // Clear selection when screen loses focus or when navigating away
+  useFocusEffect(
+    useCallback(() => {
+      // Screen is focused - do nothing
+      return () => {
+        // Screen is unfocused - clear selection
+        setSelectionMode(false);
+        setSelectedTodoIds(new Set());
+      };
+    }, [])
+  );
+
+  // Clear selection if selected todos no longer exist
+  useEffect(() => {
+    if (selectedTodoIds.size > 0) {
+      const todoIds = new Set(todos.map(t => t.id));
+      const validSelectedIds = Array.from(selectedTodoIds).filter(id => todoIds.has(id));
+      
+      if (validSelectedIds.length !== selectedTodoIds.size) {
+        if (validSelectedIds.length === 0) {
+          setSelectionMode(false);
+          setSelectedTodoIds(new Set());
+        } else {
+          setSelectedTodoIds(new Set(validSelectedIds));
+        }
+      }
+    }
+  }, [todos, selectedTodoIds]);
   
   
   const headerButtonScale = useRef(new Animated.Value(1)).current;
