@@ -50,7 +50,11 @@ class TodoService {
     localDb.insertTodo(todo);
     console.log('Todo added to SQLite with temp ID:', todo);
     
-    if (this.isOnline) {
+    // BUG FIX: Check if group_id is a temp ID
+    // If it is, don't try to sync immediately - queue it and wait for group to sync first
+    const hasTemporaryGroupId = groupId.startsWith('temp_group_');
+    
+    if (this.isOnline && !hasTemporaryGroupId) {
       try {
         console.log('Attempting to insert into Supabase:', {
           user_id: todo.user_id,
@@ -97,6 +101,12 @@ class TodoService {
         localDb.addToQueue('add', tempId, todo);
       }
     } else {
+      // Offline OR group has temp ID - queue for later sync
+      if (hasTemporaryGroupId) {
+        console.log('Todo has temporary group_id, queuing for sync after group is synced:', groupId);
+      } else {
+        console.log('Offline: Queuing todo for sync');
+      }
       localDb.addToQueue('add', tempId, todo);
     }
 
@@ -267,11 +277,31 @@ class TodoService {
         try {
           const data = JSON.parse(item.data);
           
+          // BUG FIX: Get the latest todo from local DB to check current group_id
+          // The group_id may have been updated from temp to real ID by group sync
+          const currentTodo = localDb.getTodoById(item.todo_id);
+          
+          if (!currentTodo) {
+            console.log('Todo no longer exists, removing from queue:', item.todo_id);
+            localDb.removeFromQueue(item.id);
+            continue;
+          }
+
+          // BUG FIX: Check if group_id is still a temp ID
+          // If so, skip this todo and wait for group to sync first
+          if (currentTodo.group_id.startsWith('temp_group_')) {
+            console.log('Todo has temp group_id, skipping until group syncs:', item.todo_id, currentTodo.group_id);
+            continue; // Skip this todo, will retry in next sync after groups are synced
+          }
+
+          // Use the current group_id from local DB (may have been updated by group sync)
+          const groupIdToSync = currentTodo.group_id;
+          
           const { data: insertData, error: addError } = await supabase.from('TodoTable').insert({
             user_id: data.user_id,
             title: data.title,
             description: data.description,
-            group_id: parseInt(data.group_id),
+            group_id: parseInt(groupIdToSync),
             is_completed: data.is_completed === 1,
           }).select();
           
