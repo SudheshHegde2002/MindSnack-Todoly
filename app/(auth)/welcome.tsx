@@ -8,6 +8,7 @@ import { styles } from './_styles/welcomeStyles';
 import { makeRedirectUri } from 'expo-auth-session';
 import NetInfo from '@react-native-community/netinfo';
 import { offlineUserService } from '../../services/offlineUserService';
+import LottieAnimation from './_styles/lotteAnimation';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function WelcomeScreen() {
@@ -46,9 +47,9 @@ export default function WelcomeScreen() {
         
         if (userId) {
           await offlineUserService.storeUserId(userId);
-          console.log('✅ Stored user ID after Google OAuth:', userId);
+          console.log('Stored user ID after Google OAuth:', userId);
         } else {
-          console.warn('⚠️ Could not extract user ID from OAuth flow, will rely on hooks to store it');
+          console.warn('Could not extract user ID from OAuth flow, will rely on hooks to store it');
         }
         
         // Explicitly navigate to home after successful auth
@@ -87,31 +88,7 @@ export default function WelcomeScreen() {
 
         {/* Lottie animation below the app name */}
         <View style={{ width: '100%', maxWidth: 400, height: 220, marginBottom: 24, borderRadius: 12, overflow: 'hidden' }}>
-          <WebView
-            originWhitelist={["*"]}
-            style={{ backgroundColor: 'transparent' }}
-            javaScriptEnabled
-            domStorageEnabled
-            source={{
-              html: `<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <style>
-      html, body { margin:0; padding:0; background: transparent; height:100%; }
-      .wrap { display:flex; align-items:center; justify-content:center; height:100%; }
-      dotlottie-player { width:100%; height:100%; }
-    </style>
-    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
-  </head>
-  <body>
-    <div class="wrap">
-      <dotlottie-player src="https://lottie.host/aa0a87b3-8645-4603-b29c-975c563e96a8/NB3qEaEjPn.lottie" autoplay loop></dotlottie-player>
-    </div>
-  </body>
-  </html>`
-            }}
-          />
+          <LottieAnimation />
         </View>
 
         <View style={styles.buttonContainer}>

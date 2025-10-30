@@ -94,7 +94,7 @@ export const handleVerifyPress = async ({
       const userId = completeSignUp.createdUserId;
       if (userId) {
         await offlineUserService.storeUserId(userId);
-        console.log('✅ Stored user ID after sign up:', userId);
+        console.log(' Stored user ID after sign up:', userId);
       }
       
       onSuccess();
@@ -143,15 +143,15 @@ export const handleSignInPress = async ({
       const userId = (signInAttempt as any).userData?.id || (signInAttempt as any).userId;
       if (userId) {
         await offlineUserService.storeUserId(userId);
-        console.log('✅ Stored user ID after sign in:', userId);
+        console.log(' Stored user ID after sign in:', userId);
       } else {
-        console.warn('⚠️ Could not extract user ID from sign-in, will rely on hooks to store it');
+        console.warn(' Could not extract user ID from sign-in, will rely on hooks to store it');
       }
       
       // Also store email if available
       if (emailAddress) {
         await offlineUserService.storeEmail(emailAddress);
-        console.log('✅ Stored email after sign in:', emailAddress);
+        console.log(' Stored email after sign in:', emailAddress);
       }
       
       onSuccess();

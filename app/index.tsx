@@ -17,7 +17,7 @@ export default function Index() {
         // Check if we have a stored user ID (more reliable than checking Clerk tokens)
         const storedUserId = await offlineUserService.getStoredUserId();
         const hasAuth = storedUserId !== null;
-        console.log('📱 Auth check - Stored user ID:', storedUserId ? 'Found' : 'Not found');
+        console.log(' Auth check - Stored user ID:', storedUserId ? 'Found' : 'Not found');
         setHasLocalAuth(hasAuth);
       } catch (error) {
         console.error('Error checking local auth:', error);
@@ -41,13 +41,13 @@ export default function Index() {
   // If we have a stored user ID, the user is logged in
   // Let them in immediately without waiting for Clerk
   if (hasLocalAuth === true) {
-    console.log('✅ User is authenticated (has stored user ID) - redirecting to main');
+    console.log(' User is authenticated (has stored user ID) - redirecting to main');
     return <Redirect href="/(main)" />;
   }
 
   // If we've checked and there's no stored user ID, user needs to log in
   if (hasLocalAuth === false) {
-    console.log('❌ User is not authenticated - redirecting to welcome');
+    console.log(' User is not authenticated - redirecting to welcome');
     return <Redirect href="/(auth)/welcome" />;
   }
 
