@@ -30,7 +30,7 @@ Frontend Framework
 
 UI/UX
 - React Native Components - Native UI components
-- React Native Reanimated - Smooth animations
+- React Native Animated API - Subtle animations
 - Material Icons - Icon library
 
  Authentication
@@ -59,9 +59,10 @@ Further Improvements:
 - Adding more micro animations and haptic feedback
 - Dark Mode
 - Adding more features (collabration, Reminders, Notifications etc)
+- Breaking code into more moduler parts
 
 Doubts?
-Should I had to switch to production mode in clerk? I tried but production mode requires a valid Domain, which costed to purchase,
-so choose to keep it in the Dev Mode.
+Should I switch Clerk to production mode?
+I tried, but it requires a valid domain, which would cost money to purchase, so I decided to keep it in development mode instead.
 
 This is version 1.0.0
