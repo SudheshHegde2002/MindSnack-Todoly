@@ -66,3 +66,9 @@ Should I switch Clerk to production mode?
 I tried, but it requires a valid domain, which would cost money to purchase, so I decided to keep it in development mode instead.
 
 This is version 1.0.0
+
+App Tested on-
+Samsung - m20
+Samsung - m14
+Samsung - S21
+Google - Pixel 9 (Simulator)
