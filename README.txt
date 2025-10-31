@@ -1,5 +1,5 @@
 Todoly - ReadME.
-
+github repo link - https://github.com/SudheshHegde2002/MindSnack-Todoly
 ---
 
 HOW TO INSTALL (Android)
